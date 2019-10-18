@@ -17,15 +17,13 @@
 		"email": "matthias.fueg@dampsoft.de"
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"keywords": [
-		"codereview",
-		"crucible"
-	],
+	"typings": "dist/index.d.ts",
+	"keywords": [ "codereview", "crucible" ],
 	"scripts": {
-		"build": "tsc",
-		"build-dev": "tsc -w",
-		"test": "mocha --reporter spec"
+		"test": "mocha --reporter spec",
+		"prepublish": "npm run build",
+		"watch": "npm run build -- --watch --diagnostics",
+		"build": "tsc --pretty"
 	},
 	"dependencies": {
 		"@types/node": "^12.11.1",

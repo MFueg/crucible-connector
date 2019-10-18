@@ -18,12 +18,9 @@
     "declaration": true
   },
   "exclude": [
-    "node_modules",
-    ".vscode-test"
+    "node_modules"
   ],
   "include": [
-    "src/**/*.ts",
-    "./node_modules/vscode/vscode.d.ts",
-    "./node_modules/vscode/lib/*"
+    "src/**/*"
   ]
 }

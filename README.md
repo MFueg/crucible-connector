@@ -4,9 +4,19 @@ A REST client for [Atlassian's Crucible](https://www.atlassian.com/de/software/c
 
 Still under heavy development - not much tested (Coming soon).
 
+## Installation
+
+```
+npm install --save crucible-connector
+```
+
 ## Features
 
 - Initial implementation of the [Core API](https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html).
+
+### Examples
+
+- coming soon
 
 ## What's next?
 
