@@ -15,3 +15,10 @@ export interface VersionInfo {
 export interface Authentication {
   token: string;
 }
+
+export interface Details {}
+
+export interface Link {
+  href: string;
+  rel: string;
+}

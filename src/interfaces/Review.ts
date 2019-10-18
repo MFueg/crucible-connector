@@ -1,6 +1,7 @@
 import { User } from './User';
 import { PermaID } from './Common';
 import { Comments } from './Comment';
+import { Anchor } from './Patch';
 
 export type ReviewFilter =
   | 'allReviews' //All reviews for everyone.
@@ -88,12 +89,6 @@ export interface ReviewItem {
   toContentUrl: string;
   toPath: string;
   toRevision: string;
-}
-
-export interface Anchor {
-  anchorPath: string;
-  anchorRepository: string;
-  stripCount: number;
 }
 
 export interface Changesets {

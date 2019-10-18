@@ -1,4 +1,6 @@
-export interface ChangeSet2 {
+import { Link, Details } from './Common';
+
+export interface ChangeSetExtended {
   newerChangeSetsExist: boolean;
   olderChangeSetsExist: boolean;
   change: Change[];
@@ -13,11 +15,6 @@ export interface Change {
   revision: Revision[];
 }
 
-export interface Link {
-  href: string;
-  rel: string;
-}
-
 export interface Revision {
   path: string;
   revision: string;
@@ -25,8 +22,6 @@ export interface Revision {
   diffRevision: Details;
   link: Link;
 }
-
-export interface Details {}
 
 export interface Listing {
   path: string;
