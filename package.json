@@ -30,6 +30,7 @@
 	"dependencies": {
 		"@types/node": "^12.11.1",
 		"tempfile": "^3.0.0",
+		"tslib": "^1.10.0",
 		"typed-rest-client": "^1.5.0"
 	},
 	"devDependencies": {
