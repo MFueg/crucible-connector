@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "window.title": "${dirty}${activeEditorShort}${separator}${rootName}",
+    "workbench.colorCustomizations": {
+      "titleBar.activeBackground": "#f5b0ac",
+      "titleBar.inactiveBackground": "#f5b0ac99",
+      "titleBar.activeForeground": "#15202b",
+      "titleBar.inactiveForeground": "#15202b99"
+    },
+    "peacock.color": "#f5b0ac",
+    "files.exclude": {
+      "dist/**": true,
+      "out/**": true,
+      "node_modules/**": true
+    }
+  }
+}

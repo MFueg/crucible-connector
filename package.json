@@ -1,0 +1,43 @@
+{
+	"name": "crucible-connector",
+	"description": "REST API Implementation for Atlassian Crucible",
+	"author": {
+		"name": "Matthias Füg",
+		"email": "matthias.fueg@dampsoft.de"
+	},
+	"version": "0.0.0",
+	"license": "MIT",
+	"homepage": "https://github.com/mfueg/crucible-connector",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/MFueg/crucible-connector.git"
+	},
+	"bugs": {
+		"url": "https://github.com/mfueg/crucible-connector/issues",
+		"email": "matthias.fueg@dampsoft.de"
+	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"keywords": [ "codereview", "crucible" ],
+	"scripts": {
+		"build": "tsc",
+		"build-dev": "tsc -w",
+		"test": "mocha --reporter spec"
+	},
+	"dependencies": {
+		"@types/node": "^12.11.1",
+		"tempfile": "^3.0.0",
+		"typed-rest-client": "^1.5.0"
+	},
+	"devDependencies": {
+		"chai": "^4.2.0",
+		"mocha": "^6.2.1",
+		"typescript": "^3.6.4"
+	},
+	"contributors": [
+		{
+			"name": "Matthias Füg",
+			"email": "matthias.fueg@dampsoft.de"
+		}
+	]
+}
