@@ -1,11 +1,18 @@
 /**
- * CRUCIBLE REST API Documentation
- * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html
+ * Crucible REST API Guide
+ * https://developer.atlassian.com/server/fisheye-crucible/rest-api-guide/
  *
- * FISHEYE CRUCIBLE REST API Documentation
- * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html
+ * Crucible/Fisheye Common API - Documentation
+ * https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html
  *
- * TS REST CLIENT Documentation
+ * Fisheye - API Documentation
+ * https://docs.atlassian.com/fisheye-crucible/latest/wadl/fisheye.html
+ *
+ * Crucible API - Documentation
+ * https://docs.atlassian.com/fisheye-crucible/latest/wadl/crucible.html
+ *
+ *
+ * Typescript REST Client - Documentation
  * https://github.com/Microsoft/typed-rest-client/tree/db388ca114dffc1e241ae81e6f3b9cd022c5b281/samples
  */
 
@@ -28,7 +35,7 @@ import { IRequestHandler } from 'typed-rest-client/Interfaces';
 import { Error, ReviewError } from './interfaces/Error';
 import { Change, Listing, AddChangeSet } from './interfaces/ChangeSet';
 import { VersionedEntity } from './interfaces/Version';
-import { Repository, Repositories } from './interfaces/Repository';
+import { Repository, Repositories, RepositoryType } from './interfaces/Repository';
 import { ReviewMetrics } from './interfaces/ReviewMetric';
 import { Comment, GeneralComment, Comments } from './interfaces/Comment';
 import { VersionInfo, Authentication } from './interfaces/Common';
@@ -37,6 +44,116 @@ import { Patch, PatchGroups } from './interfaces/Patch';
 import { Reviewers } from './interfaces/Reviewer';
 import { ReviewRevisions } from './interfaces/ReviewRevision';
 import { RestUri, IRequestOptions } from './util/restUri';
+import { normalize } from 'path';
+
+/**
+ * Options used to search repositories with `searchRepositories`.
+ */
+export interface SearchRepositoriesOptionsI {
+  /**
+   * Filter repositories by the repository key, only repositories of keys
+   * containing this value would be returned if value was provided. Case insensitive.
+   */
+  readonly name?: string;
+  /**
+   * Filter repositories by enabled flag.
+   * Only enabled/disabled repositories would be returned accordingly if value was provided.
+   */
+  readonly enabled?: boolean;
+  /**
+   * Filter repositories by its availability.
+   * Only available/unavailable repositories would be returned accordingly if value was provided.
+   */
+  readonly available?: boolean;
+  /**
+   * Filter repositories by type. Allowed values: cvs, svn, p4, git, hg, plugin (for light SCM repositories).
+   * Parameter can be specified more than once.
+   */
+  readonly types?: RepositoryType[];
+  /**
+   * Maximum number of repositories to be returned (default:1000).
+   * export interface SearchRepositoriesOptionsI {
+   */
+  readonly limit?: number;
+}
+
+/**
+ * Options used to search change sets with `searchChangeSets`.
+ */
+export interface SearchChangeSetsOptionsI {
+  /**
+   * Only return change sets after this change set. If omitted there is no restriction.
+   */
+  readonly oldestCsId?: string;
+  /**
+   * Include the change set with id "from" in the change sets returned.
+   */
+  readonly includeOldest?: string;
+  /**
+   * Only return change sets before this change set. If omitted there is no restriction.
+   */
+  readonly newestCsId?: string;
+  /**
+   * Include the change set with id "to" in the change sets returned.
+   */
+  readonly includeNewest?: string;
+  /**
+   * Return only the newest change sets, to the given maximum.
+   */
+  readonly max?: string;
+}
+
+
+export interface SearchReviewsOptionsI {
+  /**
+   * A string that will be searched for in review titles.
+   */
+  readonly title?: string;
+  /**
+   * Reviews authored by this user.
+   */
+  readonly author?: string;
+  /**
+   * Reviews moderated by this user.
+   */
+  readonly moderator?: string;
+  /**
+   * Reviews created by this user.
+   */
+  readonly creator?: string;
+  /**
+   * Array of review states.
+   */
+  readonly states?: ReviewState[];
+  /**
+   * Reviews reviewed by this user.
+   */
+  readonly reviewer?: string;
+  /**
+   * Whether the value of author, creator, moderator and reviewer should be OR'd (orRoles=true) or AND'd (orRoles=false) together.
+   */
+  readonly orRoles?: boolean;
+  /**
+   * Reviews that the specified reviewer has completed.
+   */
+  readonly complete?: boolean;
+  /**
+   * Reviews that all reviewers have completed.
+   */
+  readonly allReviewersComplete?: boolean;
+  /**
+   * Reviews for the specified project.
+   */
+  readonly project?: string;
+  /**
+   * Reviews with last activity date after the specified timestamp, in milliseconds. Inclusive.
+   */
+  readonly fromDate?: Date;
+  /**
+   * Reviews with last activity date before the specified timestamp, in milliseconds. Inclusive.
+   */
+  readonly toDate?: Date;
+}
 
 export class ApiCrucible {
   public constructor(
@@ -62,7 +179,8 @@ export class ApiCrucible {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json'
-      }
+      },
+      ignoreSslError: true
     };
   }
 
@@ -249,30 +367,18 @@ export class ApiCrucible {
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:repositories-v1
    *
-   * @param name      filter repositories by the repository key, only repositories of keys
-   *                  containing this value would be returned if value was provided. Case insensitive.
-   * @param enabled   filter repositories by enabled flag.
-   *                  Only enabled/disabled repositories would be returned accordingly if value was provided.
-   * @param available filter repositories by its availability.
-   *                  Only available/unavailable repositories would be returned accordingly if value was provided.
-   * @param type      filter repositories by type. Allowed values: cvs, svn, p4, git, hg, plugin (for light SCM repositories).
-   *                  Parameter can be specified more than once.
-   * @param limit     maximum number of repositories to be returned (default:1000).
+   * @param options Options to search repositories
    */
   public searchRepositories(
-    name: string,
-    enabled: boolean,
-    available: boolean,
-    type: string,
-    limit: number
+    options: SearchRepositoriesOptionsI
   ): Promise<Repositories> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .setArg('name', name)
-        .setArg('enabled', enabled)
-        .setArg('available', available)
-        .setArg('type', type)
-        .setArg('limit', limit)
+        .setArg('name', options.name)
+        .setArg('enabled', options.enabled)
+        .setArg('available', options.available)
+        .setArgs('type', options.types, 'repeat') // TODO: Check
+        .setArg('limit', options.limit)
         .get<Repositories | Error>('search-repositories', this.host, this.authHandler, this.queryOptions)
         .then((r) => {
           let result = r.get<Repositories>(HttpCodes.OK);
@@ -361,20 +467,12 @@ export class ApiCrucible {
    * @param path only show change sets which contain at least one revision with a path under this path.
    *             Changesets with some revisions outside this path still include all revisions.
    *             i.e. Revisions outside the path are *not* excluded from the change set.
-   * @param oldestCsid only return change sets after this change set. If omitted there is no restriction.
-   * @param includeOldest include the change set with id "from" in the change sets returned.
-   * @param newestCsid only return change sets before this change set. If omitted there is no restriction.
-   * @param includeNewest include the change set with id "to" in the change sets returned.
-   * @param max return only the newest change sets, to a maximum of maxChangesets.
+   * @param options Options to search change sets.
    */
   public searchChangeSets(
     repository: string,
     path: string,
-    oldestCsid: string,
-    includeOldest: string,
-    newestCsid: string,
-    includeNewest: string,
-    max: string
+    options: SearchChangeSetsOptionsI
   ): Promise<Change> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
@@ -382,11 +480,11 @@ export class ApiCrucible {
         .addPart(repository)
         .addPart(path)
         .setArg('path', path)
-        .setArg('oldestCsid', oldestCsid)
-        .setArg('includeOldest', includeOldest)
-        .setArg('newestCsid', newestCsid)
-        .setArg('includeNewest', includeNewest)
-        .setArg('max', max)
+        .setArg('oldestCsid', options.oldestCsId)
+        .setArg('includeOldest', options.includeOldest)
+        .setArg('newestCsid', options.newestCsId)
+        .setArg('includeNewest', options.includeNewest)
+        .setArg('max', options.max)
         .get<Change>('search-changesets', this.host, this.authHandler, this.queryOptions)
         .then((r) => {
           let content = r.get<Change>(HttpCodes.OK);
@@ -537,12 +635,12 @@ export class ApiCrucible {
    * The state parameter is a comma separated list of state names from the set Draft, Approval, Review,
    * Summarize, Closed, Dead, Rejected, Unknown.
    *
-   * @param state only return reviews that are in these states.
+   * @param states only return reviews that are in these states.
    */
-  public getReviews(state: string): Promise<Reviews> {
+  public getReviews(states: ReviewState[]): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .setArg('state', state)
+        .setArgs('state', states, 'join')
         .get<Reviews>('get-reviews', this.host, this.authHandler, this.queryOptions)
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -634,7 +732,7 @@ export class ApiCrucible {
    * @param commentId the comment perma id
    * @param render true if the wiki text should be rendered into html, into the field <messageAsHtml>. (Default: true)
    */
-  public getReviewComment(reviewId: string, commentId: string, render: boolean = false): Promise<Comment> {
+  public getReviewComment(reviewId: string, commentId: string, render?: boolean): Promise<Comment> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
@@ -790,13 +888,13 @@ export class ApiCrucible {
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:reviews-v1:details
    *
-   * @param state the review states to match.
+   * @param states the review states to match.
    */
-  public getReviewsDetailed(state: string): Promise<Reviews> {
+  public getReviewsDetailed(states: ReviewState[]): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart('details')
-        .setArg('state', state)
+        .setArgs('state', states, 'join') // TODO: Check
         .get<Reviews>('get-reviews-detailed', this.host, this.authHandler, this.queryOptions)
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -875,33 +973,11 @@ export class ApiCrucible {
    * To ignore a property, omit it from the query string.
    *
    * @param detailed set to true if the detailed api should be used.
-   * @param title a string that will be searched for in review titles.
-   * @param author reviews authored by this user.
-   * @param moderator reviews moderated by this user.
-   * @param creator reviews created by this user.
-   * @param states array of review states.
-   * @param reviewer reviews reviewed by this user.
-   * @param orRoles whether the value of author, creator, moderator and reviewer should be OR'd (orRoles=true) or AND'd (orRoles=false) together.
-   * @param complete reviews that the specified reviewer has completed.
-   * @param allReviewersComplete Reviews that all reviewers have completed.
-   * @param project reviews for the specified project.
-   * @param fromDate reviews with last activity date after the specified timestamp, in milliseconds. Inclusive.
-   * @param toDate
+   * @param options  options to search for reviews.
    */
   private searchReviewsInternal(
     detailed: boolean,
-    title?: string,
-    author?: string,
-    moderator?: string,
-    creator?: string,
-    states?: ReviewState[],
-    reviewer?: string,
-    orRoles?: boolean,
-    complete?: boolean,
-    allReviewersComplete?: boolean,
-    project?: string,
-    fromDate?: Date,
-    toDate?: Date
+    options: SearchReviewsOptionsI
   ): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'search-reviews-detailed' : 'search-reviews';
@@ -910,18 +986,18 @@ export class ApiCrucible {
         uri.addPart('details');
       }
       uri
-        .setArg('title', title)
-        .setArg('author', author)
-        .setArg('moderator', moderator)
-        .setArg('creator', creator)
-        .setArg('states', states ? states.join(',') : undefined)
-        .setArg('reviewer', reviewer)
-        .setArg('orRoles', orRoles)
-        .setArg('complete', complete)
-        .setArg('allReviewersComplete', allReviewersComplete)
-        .setArg('project', project)
-        .setArg('fromDate', fromDate ? fromDate.getMilliseconds() : undefined)
-        .setArg('toDate', toDate ? toDate.getMilliseconds() : undefined)
+        .setArg('title', options.title)
+        .setArg('author', options.author)
+        .setArg('moderator', options.moderator)
+        .setArg('creator', options.creator)
+        .setArgs('states', options.states, 'join')
+        .setArg('reviewer', options.reviewer)
+        .setArg('orRoles', options.orRoles)
+        .setArg('complete', options.complete)
+        .setArg('allReviewersComplete', options.allReviewersComplete)
+        .setArg('project', options.project)
+        .setArg('fromDate', options.fromDate ? options.fromDate.getMilliseconds() : undefined)
+        .setArg('toDate', options.toDate ? options.toDate.getMilliseconds() : undefined)
         .get<Reviews>(id, this.host, this.authHandler, this.queryOptions)
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -944,48 +1020,10 @@ export class ApiCrucible {
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:reviews-v1:filter
    *
-   * @param title a string that will be searched for in review titles.
-   * @param author reviews authored by this user.
-   * @param moderator reviews moderated by this user.
-   * @param creator reviews created by this user.
-   * @param states array of review states.
-   * @param reviewer reviews reviewed by this user.
-   * @param orRoles whether the value of author, creator, moderator and reviewer should be OR'd (orRoles=true) or AND'd (orRoles=false) together.
-   * @param complete reviews that the specified reviewer has completed.
-   * @param allReviewersComplete Reviews that all reviewers have completed.
-   * @param project reviews for the specified project.
-   * @param fromDate reviews with last activity date after the specified timestamp, in milliseconds. Inclusive.
-   * @param toDate
+   * @param options  options to search for reviews.
    */
-  public searchReviews(
-    title?: string,
-    author?: string,
-    moderator?: string,
-    creator?: string,
-    states?: ReviewState[],
-    reviewer?: string,
-    orRoles?: boolean,
-    complete?: boolean,
-    allReviewersComplete?: boolean,
-    project?: string,
-    fromDate?: Date,
-    toDate?: Date
-  ): Promise<Reviews> {
-    return this.searchReviewsInternal(
-      false,
-      title,
-      author,
-      moderator,
-      creator,
-      states,
-      reviewer,
-      orRoles,
-      complete,
-      allReviewersComplete,
-      project,
-      fromDate,
-      toDate
-    );
+  public searchReviews(options: SearchReviewsOptionsI): Promise<Reviews> {
+    return this.searchReviewsInternal(false, options);
   }
 
   /**
@@ -996,48 +1034,10 @@ export class ApiCrucible {
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:reviews-v1:filter:details
    *
-   * @param title a string that will be searched for in review titles.
-   * @param author reviews authored by this user.
-   * @param moderator reviews moderated by this user.
-   * @param creator reviews created by this user.
-   * @param states array of review states.
-   * @param reviewer reviews reviewed by this user.
-   * @param orRoles whether the value of author, creator, moderator and reviewer should be OR'd (orRoles=true) or AND'd (orRoles=false) together.
-   * @param complete reviews that the specified reviewer has completed.
-   * @param allReviewersComplete Reviews that all reviewers have completed.
-   * @param project reviews for the specified project.
-   * @param fromDate reviews with last activity date after the specified timestamp, in milliseconds. Inclusive.
-   * @param toDate
+   * @param options  options to search for reviews.
    */
-  public searchReviewsDetailed(
-    title?: string,
-    author?: string,
-    moderator?: string,
-    creator?: string,
-    states?: ReviewState[],
-    reviewer?: string,
-    orRoles?: boolean,
-    complete?: boolean,
-    allReviewersComplete?: boolean,
-    project?: string,
-    fromDate?: Date,
-    toDate?: Date
-  ): Promise<Reviews> {
-    return this.searchReviewsInternal(
-      true,
-      title,
-      author,
-      moderator,
-      creator,
-      states,
-      reviewer,
-      orRoles,
-      complete,
-      allReviewersComplete,
-      project,
-      fromDate,
-      toDate
-    );
+  public searchReviewsDetailed(options: SearchReviewsOptionsI): Promise<Reviews> {
+    return this.searchReviewsInternal(true, options);
   }
 
   /**
@@ -1049,7 +1049,7 @@ export class ApiCrucible {
    * @param commentId the comment to reply to
    * @param render true if the comments should also be rendered into html, into the element <messageAsHtml>
    */
-  public getReviewCommentReplies(reviewId: string, commentId: string, render: boolean = false): Promise<Comments> {
+  public getReviewCommentReplies(reviewId: string, commentId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
@@ -1364,7 +1364,7 @@ export class ApiCrucible {
    * @param reviewId the review perma id
    * @param ignoreWarnings if true then condition failure warnings will be ignored
    */
-  public completeReview(reviewId: string, ignoreWarnings: boolean): Promise<void> {
+  public completeReview(reviewId: string, ignoreWarnings?: boolean): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
@@ -1403,7 +1403,7 @@ export class ApiCrucible {
    * @param reviewId the review perma id
    * @param ignoreWarnings if true then condition failure warnings will be ignored
    */
-  public uncompleteReview(reviewId: string, ignoreWarnings: boolean): Promise<void> {
+  public uncompleteReview(reviewId: string, ignoreWarnings?: boolean): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
@@ -1446,7 +1446,7 @@ export class ApiCrucible {
   public changeReviewState(
     reviewId: string,
     transition: ReviewTransitionName,
-    ignoreWarnings: boolean
+    ignoreWarnings?: boolean
   ): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
@@ -1560,7 +1560,7 @@ export class ApiCrucible {
         uri.addPart('details');
       }
       uri
-        .setArg('path', path)
+        .setArg('path', normalize(path).replace(/^\/+/, '')) // remove leading slash
         .get<Reviews | Error>(id, this.host, this.authHandler, this.queryOptions)
         .then((r) => {
           let result = r.get<Reviews>(HttpCodes.OK);
@@ -1860,7 +1860,7 @@ export class ApiCrucible {
         .addPart('reviewitems')
         .addPart(reviewItemId)
         .addPart('revisions')
-        .setArg('rev', revisions)
+        .setArgs('rev', revisions, 'join') // TODO: check
         .create<void, ReviewItem | Error>(
           'add-revisions-to-review-item',
           undefined,
@@ -1904,7 +1904,7 @@ export class ApiCrucible {
         .addPart('reviewitems')
         .addPart(reviewItemId)
         .addPart('revisions')
-        .setArg('rev', revisions)
+        .setArgs('rev', revisions, 'join') // TODO: Check
         .del<ReviewItem | Error>('remove-revisions-from-review-item', this.host, this.authHandler, this.queryOptions)
         .then((r) => {
           let result = r.get<ReviewItem>(HttpCodes.OK);
@@ -1985,7 +1985,7 @@ export class ApiCrucible {
    * @param reviewId the review perma id
    * @param render true if the wiki text should be rendered into html, into the field <messageAsHtml>.
    */
-  public getReviewComments(reviewId: string, render: boolean = false): Promise<Comments> {
+  public getReviewComments(reviewId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
@@ -2007,12 +2007,12 @@ export class ApiCrucible {
   }
 
   /**
-   * Return all the comments visible to the requesting user for the review.
+   * Add a general comment to the review.
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:reviews-v1:id:comments
    *
    * @param reviewId the review perma id
-   * @param render true if the wiki text should be rendered into html, into the field <messageAsHtml>.
+   * @param comment new comment to be added
    */
   public addReviewComment(reviewId: string, comment: GeneralComment): Promise<Comment> {
     return new Promise((resolve, reject) => {
@@ -2048,7 +2048,7 @@ export class ApiCrucible {
    * @param reviewId the review perma id
    * @param render true if the wiki text should be rendered into html, into the field <messageAsHtml>.
    */
-  public getReviewGeneralComments(reviewId: string, render: boolean = false): Promise<Comments> {
+  public getReviewGeneralComments(reviewId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
@@ -2078,7 +2078,7 @@ export class ApiCrucible {
    * @param reviewId the review perma id
    * @param render true if the wiki text should be rendered into html, into the field <messageAsHtml>.
    */
-  public getReviewVersionedComments(reviewId: string, render: boolean = false): Promise<Comments> {
+  public getReviewVersionedComments(reviewId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
@@ -2109,7 +2109,7 @@ export class ApiCrucible {
    * @param reviewItemId review item id (e.g. "CFR-6312").
    * @param render true if the wiki text should be rendered into html, into the field <messageAsHtml>.
    */
-  public getReviewItemComments(reviewId: string, reviewItemId: string, render: boolean = false): Promise<Comments> {
+  public getReviewItemComments(reviewId: string, reviewItemId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)

@@ -6,10 +6,10 @@ import { Error } from '../interfaces/Error';
 
 const tempfile = require('tempfile');
 
-export interface IRequestOptions extends trc.IRequestOptions {}
+export interface IRequestOptions extends trc.IRequestOptions { }
 
 export class Response<T> {
-  public constructor(public readonly statusCode: number, public readonly result: T | null) {}
+  public constructor(public readonly statusCode: number, public readonly result: T | null) { }
 
   public get<U = T>(code?: HttpCodes): U | undefined {
     if (!code || code != this.statusCode) {
@@ -37,7 +37,7 @@ export class Response<T> {
 
 export class RestUri {
   public readonly parts = new Array<string>();
-  public readonly args = new Map<string, any>();
+  public readonly args = new Map<string, string[]>();
 
   public constructor(private base: string, ...parts: string[]) {
     for (var i = 0; i < parts.length; i++) {
@@ -45,13 +45,18 @@ export class RestUri {
     }
   }
 
-  public setArg(key: string, value: any | any[] | undefined) {
+  public setArgs(key: string, values: any[] | undefined, type: 'join' | 'repeat' = 'join') {
+    if (values != undefined && values.length > 0) {
+      const strValues = values.map(v => String(v));
+      const newValues: string[] = (type == "join") ? [strValues.join(",")] : strValues;
+      this.args.set(key, (this.args.get(key) || []).concat(newValues));
+    }
+    return this;
+  }
+
+  public setArg(key: string, value: any | undefined) {
     if (value != undefined) {
-      if (Array.isArray(value)) {
-        value.forEach((v) => this.args.set(key, v));
-      } else {
-        this.args.set(key, value);
-      }
+      this.args.set(key, (this.args.get(key) || []).concat(String(value)));
     }
     return this;
   }
@@ -66,8 +71,10 @@ export class RestUri {
     parts.unshift(this.base);
     let url = parts.join('/');
     let urlParams = new Array<string>();
-    this.args.forEach((k, v) => {
-      urlParams.push(`${encodeURI(k)}=${encodeURI(v)}`);
+    this.args.forEach((vs, k) => {
+      vs.forEach(v => {
+        urlParams.push(`${encodeURI(k)}=${encodeURI(v)}`);
+      });
     });
     if (urlParams.length > 0) {
       url += '?' + urlParams.join('&');
@@ -89,7 +96,7 @@ export class RestUri {
           resolve(new Response(response.statusCode, response.result));
         })
         .catch((e) => {
-          reject();
+          reject(e);
         });
     });
   }
@@ -109,7 +116,7 @@ export class RestUri {
           resolve(new Response(response.statusCode, response.result));
         })
         .catch((e) => {
-          reject();
+          reject(e);
         });
     });
   }
@@ -129,7 +136,7 @@ export class RestUri {
           resolve(new Response(response.statusCode, response.result));
         })
         .catch((e) => {
-          reject();
+          reject(e);
         });
     });
   }
@@ -148,7 +155,7 @@ export class RestUri {
           resolve(new Response(response.statusCode, response.result));
         })
         .catch((e) => {
-          reject();
+          reject(e);
         });
     });
   }
@@ -168,7 +175,7 @@ export class RestUri {
           resolve(new Response(response.statusCode, response.result));
         })
         .catch((e) => {
-          reject();
+          reject(e);
         });
     });
   }
@@ -183,13 +190,17 @@ export class RestUri {
       let tempFilePath = tempfile();
       let file: NodeJS.WritableStream = fs.createWriteStream(tempFilePath);
       let client = new HttpClient(id, authHandlers, requestOptions);
-      client.get(host + '/' + this.str()).then((r) => {
-        r.message.pipe(file).on('close', () => {
-          let body: string = fs.readFileSync(tempFilePath).toString();
-          let result: Result = JSON.parse(body);
-          resolve(new Response(HttpCodes.OK, result));
+      client
+        .get(host + '/' + this.str()).then((r) => {
+          r.message.pipe(file).on('close', () => {
+            let body: string = fs.readFileSync(tempFilePath).toString();
+            let result: Result = JSON.parse(body);
+            resolve(new Response(HttpCodes.OK, result));
+          });
+        })
+        .catch((e) => {
+          reject(e);
         });
-      });
     });
   }
 }
