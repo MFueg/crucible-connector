@@ -2,9 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2018",
-    "lib": [
-      "es2018"
-    ],
+    "lib": ["es2018"],
     "rootDir": "src",
     "outDir": "./dist",
     "importHelpers": true,
@@ -13,14 +11,10 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "removeComments": true,
+    "removeComments": false,
     "skipLibCheck": true,
     "declaration": true
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "src/**/*"
-  ]
+  "exclude": ["node_modules"],
+  "include": ["src/**/*"]
 }
