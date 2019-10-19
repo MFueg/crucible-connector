@@ -18,15 +18,12 @@
 	},
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
-	"keywords": [
-		"codereview",
-		"crucible"
-	],
+	"keywords": [ "typescript", "codereview", "crucible" ],
 	"scripts": {
 		"test": "mocha --reporter spec",
-		"prepublish": "npm run build",
-		"watch": "npm run build -- --watch --diagnostics",
-		"build": "tsc --pretty"
+		"build": "tsc --pretty",
+		"prepublishOnly": "npm run build",
+		"watch": "npm run build -- --watch --diagnostics"
 	},
 	"dependencies": {
 		"@types/node": "^12.11.1",
