@@ -18,9 +18,13 @@
 	},
 	"main": "dist/index.js",
 	"typings": "dist/index.d.ts",
-	"keywords": [ "typescript", "codereview", "crucible" ],
+	"keywords": [
+		"typescript",
+		"codereview",
+		"crucible"
+	],
 	"scripts": {
-		"test": "mocha --reporter spec",
+		"test": "mocha -r ts-node/register src/**/*.test.ts --reporter spec",
 		"build": "tsc --pretty",
 		"prepublishOnly": "npm run build",
 		"watch": "npm run build -- --watch --diagnostics"
@@ -32,8 +36,12 @@
 		"typed-rest-client": "^1.5.0"
 	},
 	"devDependencies": {
+		"@types/chai": "^4.2.3",
+		"@types/mocha": "^5.2.7",
 		"chai": "^4.2.0",
-		"mocha": "^6.2.1",
+		"mocha": "^6.2.2",
+		"mockttp": "^0.19.0",
+		"ts-node": "^8.4.1",
 		"typescript": "^3.6.4"
 	},
 	"contributors": [
