@@ -377,7 +377,7 @@ export class ApiCrucible {
         .setArg('name', options.name)
         .setArg('enabled', options.enabled)
         .setArg('available', options.available)
-        .setArgs('type', options.types, 'repeat') // TODO: Check
+        .setArgs('type', options.types, 'repeat')
         .setArg('limit', options.limit)
         .get<Repositories | Error>('search-repositories', this.host, this.authHandler, this.queryOptions)
         .then((r) => {
@@ -630,7 +630,7 @@ export class ApiCrucible {
 
   /**
    * Get all reviews as a list of ReviewData structures.
-   * Note that this may return a lot of data, so using /reviews-v1/filter/<filter> is usually better.
+   * ! Note that this may return a lot of data, so using `filterReviews` is usually better.
    *
    * The state parameter is a comma separated list of state names from the set Draft, Approval, Review,
    * Summarize, Closed, Dead, Rejected, Unknown.
