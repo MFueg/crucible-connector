@@ -16,10 +16,8 @@
  * https://github.com/Microsoft/typed-rest-client/tree/db388ca114dffc1e241ae81e6f3b9cd022c5b281/samples
  */
 
-export type IndexingStatus = any; // TODO: evaluate this type
-
 import { BasicCredentialHandler, PersonalAccessTokenCredentialHandler } from 'typed-rest-client/Handlers';
-import { User, UserProfile } from './interfaces/User';
+import { User, UserProfile } from './interfaces/crucible/User';
 import {
   Review,
   Reviews,
@@ -31,34 +29,30 @@ import {
   CloseReviewSummary,
   ReviewTransitions,
   ReviewItems
-} from './interfaces/Review';
+} from './interfaces/crucible/Review';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { IRequestHandler, IHeaders } from 'typed-rest-client/Interfaces';
-import { Error, ReviewError } from './interfaces/Error';
-import { Change, Listing, AddChangeSet } from './interfaces/ChangeSet';
-import { VersionedEntity } from './interfaces/Version';
-import { Repository, Repositories, RepositoryType } from './interfaces/Repository';
-import { ReviewMetrics } from './interfaces/ReviewMetric';
-import { Comment, GeneralComment, Comments } from './interfaces/Comment';
-import { VersionInfo, Authentication } from './interfaces/Common';
-import { History } from './interfaces/History';
-import { Patch, PatchGroups } from './interfaces/Patch';
-import { Reviewers } from './interfaces/Reviewer';
-import { ReviewRevisions } from './interfaces/ReviewRevision';
+import { IRequestHandler } from 'typed-rest-client/Interfaces';
+import { Error, ReviewError } from './interfaces/crucible/Error';
+import { Change, Listing, AddChangeSet } from './interfaces/crucible/ChangeSet';
+import { VersionedEntity } from './interfaces/crucible/Version';
+import { Repository, Repositories, RepositoryType } from './interfaces/crucible/Repository';
+import { ReviewMetrics } from './interfaces/crucible/ReviewMetric';
+import { Comment, GeneralComment, Comments } from './interfaces/crucible/Comment';
+import { VersionInfo, Authentication } from './interfaces/crucible/Common';
+import { History } from './interfaces/crucible/History';
+import { Patch, PatchGroups } from './interfaces/crucible/Patch';
+import { Reviewers } from './interfaces/crucible/Reviewer';
+import { ReviewRevisions } from './interfaces/crucible/ReviewRevision';
 import { RestUri, IRequestOptions } from './util/restUri';
 import { normalize } from 'path';
 import { ServerStatus } from './interfaces/fecru/ServerStatus';
-import {
-  UserGroup,
-  UserGroupContent,
-  UserName,
-  UserCreate,
-  UserData,
-  UserPassword,
-  UserGroupName
-} from './interfaces/fecru/UserGroup';
+import { UserGroup, UserGroupContent, UserGroupName } from './interfaces/fecru/UserGroup';
+import { UserName, UserCreate, UserData, UserPassword } from './interfaces/fecru/User';
 import { PagedRequestOptions, PagedResponse } from './interfaces/fecru/PagedResponse';
 import { Project, ProjectUpdate } from './interfaces/fecru/Project';
+import { IndexingStatus } from './interfaces/fecru/Indexing';
+import { ReviewerGroup } from './interfaces/fecru/ReviewerGroup';
+import { RepositoryAny } from './interfaces/fecru/Repository';
 
 /**
  * Options used to search repositories with `searchRepositories`.
@@ -188,6 +182,23 @@ export interface GetProjectsPagedOptionsI extends PagedRequestOptions {
    * project's permission scheme pare name filter
    */
   readonly permissionSchemeName?: string;
+}
+
+export interface GetRepositoriesPagedOptionsI extends PagedRequestOptions {
+  /**
+   * filter repositories by repository type
+   */
+  readonly type?: RepositoryType;
+
+  /**
+   * filter repositories by enabled flag
+   */
+  readonly enabled?: boolean;
+
+  /**
+   * filter repositories by started flag
+   */
+  readonly started?: boolean;
 }
 
 export type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
@@ -600,7 +611,7 @@ export class CrucibleConnector {
       this.uriAdmin
         .addPart('groups')
         .addPart(groupName)
-        .replace<UserGroupContent | Error>(
+        .replace<void | Error>(
           'add-user-to-user-group',
           user,
           this.host,
@@ -969,8 +980,7 @@ export class CrucibleConnector {
 
   /**
    * Deletes a project by key (including all reviews in this project).
-   * Use PUT /rest-service-fecru/admin/projects/[sourceProjectKey]/move-reviews/[destinationProjectKey]
-   * to move reviews to another project.
+   * Use `moveProjectContent` to move reviews to another project.
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key
    *
@@ -1022,6 +1032,500 @@ export class CrucibleConnector {
         .then((r) => {
           if (r.statusCode == 204) {
             resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Retrieves project's default reviewer users
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:default-reviewer-users
+   *
+   * @param projectKey project key
+   * @param options page options.
+   */
+  public getProjectDefaultReviewUsersPaged(
+    projectKey: string,
+    options: PagedRequestOptions
+  ): Promise<PagedResponse<UserName>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('default-reviewer-users')
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<UserName> | Error>(
+          'get-paged-default-reviewer-users-of-project',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Add user to project's default reviewer users list.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:default-reviewer-users
+   *
+   * @param projectKey project key
+   * @param userName User to add.
+   */
+  public addDefaultReviewUserToProject(projectKey: string, userName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const user: UserName = { name: userName };
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('default-reviewer-users')
+        .replace<void | Error>(
+          'add-default-reviewer-users-to-project',
+          user,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          if (r.statusCode == 204 || r.statusCode == 304) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Remove user from project's default reviewer users list.
+   * FIXME: Can't be implemented yet, because the typed-rest-client does not provide content at the `del` method.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:default-reviewer-users
+   *
+   * @param projectKey project key
+   * @param userName User to be removed.
+   */
+  // public removeDefaultReviewUserFromProject(projectKey: string, userName: string): Promise<void> {
+  //   return new Promise((resolve, reject) => {
+  //     const user: UserName = { name: userName };
+  //     this.uriAdmin
+  //       .addPart('projects')
+  //       .addPart(projectKey)
+  //       .addPart('default-reviewer-users')
+  //       .del<void | Error>('delete-default-reviewer-users-from-project', user, this.host, this.getAuthHandlers(),
+  //                          this.cerateQueryOptions())
+  //       .then((r) => {
+  //         if (r.statusCode == 204 || r.statusCode == 304) {
+  //           resolve();
+  //         } else {
+  //           reject(r.getError());
+  //         }
+  //       })
+  //       .catch((e) => {
+  //         reject(e);
+  //       });
+  //   });
+  // }
+
+  /**
+   * Retrieves project's default reviewer groups.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:default-reviewer-groups
+   *
+   * @param projectKey project key
+   * @param options page options.
+   */
+  public getProjectDefaultReviewerGroupsPaged(
+    projectKey: string,
+    options: PagedRequestOptions
+  ): Promise<PagedResponse<ReviewerGroup>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('default-reviewer-groups')
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<ReviewerGroup> | Error>(
+          'get-paged-default-reviewer-groups-of-project',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Add group to project's default reviewer group list.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:default-reviewer-groups
+   *
+   * @param projectKey project key
+   * @param groupName Group to add.
+   */
+  public addDefaultReviewerGroupToProject(projectKey: string, groupName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const group: ReviewerGroup = { name: groupName };
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('default-reviewer-groups')
+        .replace<void | Error>(
+          'add-default-reviewer-group-to-project',
+          group,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          if (r.statusCode == 204 || r.statusCode == 304) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Delete group from project's default reviewer group list.
+   * FIXME: Can't be implemented yet, because the typed-rest-client does not provide content at the `del` method.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:default-reviewer-groups
+   *
+   * @param projectKey project key
+   * @param groupName User to be removed.
+   */
+  // public removeDefaultReviewerGroupFromProject(projectKey: string, userName: string): Promise<void> {
+  //   return new Promise((resolve, reject) => {
+  //     const group: ReviewerGroup = { name: groupName };
+  //     this.uriAdmin
+  //       .addPart('projects')
+  //       .addPart(projectKey)
+  //       .addPart('default-reviewer-groups')
+  //       .del<void | Error>('delete-reviewer-group-from-project', group, this.host, this.getAuthHandlers(),
+  //                          this.cerateQueryOptions())
+  //       .then((r) => {
+  //         if (r.statusCode == 204 || r.statusCode == 304) {
+  //           resolve();
+  //         } else {
+  //           reject(r.getError());
+  //         }
+  //       })
+  //       .catch((e) => {
+  //         reject(e);
+  //       });
+  //   });
+  // }
+
+  /**
+   * Retrieves project's allowed reviewer users.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+   *
+   * @param projectKey project key
+   * @param options page options.
+   */
+  public getProjectAllowedReviewerUsersPaged(
+    projectKey: string,
+    options: PagedRequestOptions
+  ): Promise<PagedResponse<UserName>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('allowed-reviewer-users')
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<UserName> | Error>(
+          'get-paged-allowed-reviewer-users-of-project',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Add user to project's allowed reviewer users list.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+   *
+   * @param projectKey project key
+   * @param userName User to add
+   */
+  public addAllowedReviewerUserToProject(projectKey: string, userName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const user: UserName = { name: userName };
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('allowed-reviewer-users')
+        .replace<void | Error>(
+          'add-default-reviewer-group-to-project',
+          user,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          if (r.statusCode == 204 || r.statusCode == 304) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Remove user from project's allowed reviewer users list.
+   * FIXME: Can't be implemented yet, because the typed-rest-client does not provide content at the `del` method.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+   *
+   * @param projectKey project key
+   * @param userName User to be removed.
+   */
+  // public removeAllowedReviewerUserFromProject(projectKey: string, userName: string): Promise<void> {
+  //   return new Promise((resolve, reject) => {
+  //     const user: UserName = { name: userName };
+  //     this.uriAdmin
+  //       .addPart('projects')
+  //       .addPart(projectKey)
+  //       .addPart('allowed-reviewer-users')
+  //       .del<void | Error>('delete-reviewer-group-from-project', user, this.host, this.getAuthHandlers(),
+  //                          this.cerateQueryOptions())
+  //       .then((r) => {
+  //         if (r.statusCode == 204 || r.statusCode == 304) {
+  //           resolve();
+  //         } else {
+  //           reject(r.getError());
+  //         }
+  //       })
+  //       .catch((e) => {
+  //         reject(e);
+  //       });
+  //   });
+  // }
+
+  /**
+   * Retrieves project's allowed reviewer groups.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+   *
+   * @param projectKey project key
+   * @param options page options.
+   */
+  public getProjectAllowedReviewerGroupsPaged(
+    projectKey: string,
+    options: PagedRequestOptions
+  ): Promise<PagedResponse<ReviewerGroup>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('allowed-reviewer-groups')
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<ReviewerGroup> | Error>(
+          'get-paged-allowed-reviewer-groups-of-project',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Add group to project's allowed reviewer group list.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+   *
+   * @param projectKey project key
+   * @param groupName Group to add
+   */
+  public addAllowedReviewerGroupToProject(projectKey: string, groupName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const group: ReviewerGroup = { name: groupName };
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .addPart('allowed-reviewer-groups')
+        .replace<void | Error>(
+          'add-allowed-reviewer-group-to-project',
+          group,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          if (r.statusCode == 204 || r.statusCode == 304) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Remove user from project's allowed reviewer users list.
+   * FIXME: Can't be implemented yet, because the typed-rest-client does not provide content at the `del` method.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+   *
+   * @param projectKey project key
+   * @param groupName Group to be removed.
+   */
+  // public removeAllowedReviewerGroupFromProject(projectKey: string, groupName: string): Promise<void> {
+  //   return new Promise((resolve, reject) => {
+  //     const group: ReviewerGroup = { name: groupName };
+  //     this.uriAdmin
+  //       .addPart('projects')
+  //       .addPart(projectKey)
+  //       .addPart('allowed-reviewer-groups')
+  //       .del<void | Error>('delete-allowed-reviewer-group-from-project', group, this.host, this.getAuthHandlers(),
+  //                          this.cerateQueryOptions())
+  //       .then((r) => {
+  //         if (r.statusCode == 204 || r.statusCode == 304) {
+  //           resolve();
+  //         } else {
+  //           reject(r.getError());
+  //         }
+  //       })
+  //       .catch((e) => {
+  //         reject(e);
+  //       });
+  //   });
+  // }
+
+  /* TODO: Some methods skipped - might be implemented later
+   *
+   * - /rest-service-fecru/recently-visited-v1
+   *
+   */
+
+  /**
+   * Creates a repository.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:repositories
+   *
+   * @param repository New project to create.
+   */
+  public createRepository(repository: RepositoryAny): Promise<RepositoryAny> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('repositories')
+        .create<RepositoryAny | Error>(
+          'create-repository',
+          repository,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<RepositoryAny>(201);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Retrieve a page of repositories. Repository properties with default values may not be returned.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:repositories
+   *
+   * @param options page options.
+   */
+  public getRepositoriesPaged(options: GetRepositoriesPagedOptionsI): Promise<PagedResponse<RepositoryAny>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('repositories')
+        .setArg('type', options.type)
+        .setArg('enabled', options.enabled)
+        .setArg('started', options.started)
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<RepositoryAny> | Error>(
+          'get-paged-repositories',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<RepositoryAny>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
           } else {
             reject(r.getError());
           }

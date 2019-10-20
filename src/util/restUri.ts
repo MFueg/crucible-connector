@@ -2,7 +2,7 @@ import { RestClient } from 'typed-rest-client';
 import * as trc from 'typed-rest-client/Interfaces';
 import { HttpCodes, HttpClient } from 'typed-rest-client/HttpClient';
 import * as fs from 'fs';
-import { Error } from '../interfaces/Error';
+import { Error } from '../interfaces/crucible/Error';
 
 const tempfile = require('tempfile');
 

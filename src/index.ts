@@ -9,19 +9,19 @@ export {
   Directory,
   Listing,
   Revision
-} from './interfaces/ChangeSet';
+} from './interfaces/crucible/ChangeSet';
 
-export { Comment, Comments, GeneralComment } from './interfaces/Comment';
+export { Comment, Comments, GeneralComment } from './interfaces/crucible/Comment';
 
-export { Details, Link, Authentication, PermaID, TimeZone, VersionInfo } from './interfaces/Common';
+export { Details, Link, Authentication, PermaID, TimeZone, VersionInfo } from './interfaces/crucible/Common';
 
-export { Error, ErrorCode, FailedCondition, ReviewError } from './interfaces/Error';
+export { Error, ErrorCode, FailedCondition, ReviewError } from './interfaces/crucible/Error';
 
-export { History } from './interfaces/History';
+export { History } from './interfaces/crucible/History';
 
-export { Anchor, Patch, PatchGroup, PatchGroups, PatchRead } from './interfaces/Patch';
+export { Anchor, Patch, PatchGroup, PatchGroups, PatchRead } from './interfaces/crucible/Patch';
 
-export { Repositories, Repository, RepositoryShort, RepositoryType } from './interfaces/Repository';
+export { Repositories, Repository, RepositoryShort, RepositoryType } from './interfaces/crucible/Repository';
 
 export {
   Action,
@@ -42,16 +42,16 @@ export {
   ReviewsQuery,
   Transition,
   Transitions
-} from './interfaces/Review';
+} from './interfaces/crucible/Review';
 
-export { ReviewMetric, ReviewMetrics, Value } from './interfaces/ReviewMetric';
+export { ReviewMetric, ReviewMetrics, Value } from './interfaces/crucible/ReviewMetric';
 
-export { ReviewRevision, ReviewRevisions } from './interfaces/ReviewRevision';
+export { ReviewRevision, ReviewRevisions } from './interfaces/crucible/ReviewRevision';
 
-export { Reviewer, Reviewers } from './interfaces/Reviewer';
+export { Reviewer, Reviewers } from './interfaces/crucible/Reviewer';
 
-export { Committer, Committers, Element, Preferences, User, UserProfile } from './interfaces/User';
+export { Committer, Committers, Element, Preferences, User, UserProfile } from './interfaces/crucible/User';
 
-export { Version, VersionedEntity } from './interfaces/Version';
+export { Version, VersionedEntity } from './interfaces/crucible/Version';
 
 export { IRequestOptions, Response, RestUri } from './util/restUri';
