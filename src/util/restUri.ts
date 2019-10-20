@@ -6,10 +6,10 @@ import { Error } from '../interfaces/Error';
 
 const tempfile = require('tempfile');
 
-export interface IRequestOptions extends trc.IRequestOptions { }
+export interface IRequestOptions extends trc.IRequestOptions {}
 
 export class Response<T> {
-  public constructor(public readonly statusCode: number, public readonly result: T | null) { }
+  public constructor(public readonly statusCode: number, public readonly result: T | null) {}
 
   public get<U = T>(code?: HttpCodes): U | undefined {
     if (!code || code != this.statusCode) {
@@ -47,8 +47,8 @@ export class RestUri {
 
   public setArgs(key: string, values: any[] | undefined, type: 'join' | 'repeat' = 'join') {
     if (values != undefined && values.length > 0) {
-      const strValues = values.map(v => String(v));
-      const newValues: string[] = (type == "join") ? [strValues.join(",")] : strValues;
+      const strValues = values.map((v) => String(v));
+      const newValues: string[] = type == 'join' ? [strValues.join(',')] : strValues;
       this.args.set(key, (this.args.get(key) || []).concat(newValues));
     }
     return this;
@@ -72,7 +72,7 @@ export class RestUri {
     let url = parts.join('/');
     let urlParams = new Array<string>();
     this.args.forEach((vs, k) => {
-      vs.forEach(v => {
+      vs.forEach((v) => {
         urlParams.push(`${encodeURI(k)}=${encodeURI(v)}`);
       });
     });
@@ -82,6 +82,14 @@ export class RestUri {
     return url;
   }
 
+  /**
+   * HTTP GET
+   *
+   * @param id
+   * @param host
+   * @param authHandlers
+   * @param requestOptions
+   */
   public get<Result>(
     id: string,
     host: string,
@@ -101,9 +109,18 @@ export class RestUri {
     });
   }
 
-  public create<Resource, Result>(
+  /**
+   * HTTP POST
+   *
+   * @param id
+   * @param content
+   * @param host
+   * @param authHandlers
+   * @param requestOptions
+   */
+  public create<Result>(
     id: string,
-    content: Resource,
+    content: any,
     host: string,
     authHandlers: trc.IRequestHandler[],
     requestOptions: IRequestOptions
@@ -121,9 +138,18 @@ export class RestUri {
     });
   }
 
-  public update<Resource, Result>(
+  /**
+   * HTTP PATCH
+   *
+   * @param id
+   * @param content
+   * @param host
+   * @param authHandlers
+   * @param requestOptions
+   */
+  public update<Result>(
     id: string,
-    content: Resource,
+    content: any,
     host: string,
     authHandlers: trc.IRequestHandler[],
     requestOptions: IRequestOptions
@@ -141,6 +167,43 @@ export class RestUri {
     });
   }
 
+  /**
+   * HTTP PUT
+   *
+   * @param id
+   * @param content
+   * @param host
+   * @param authHandlers
+   * @param requestOptions
+   */
+  public replace<Result>(
+    id: string,
+    content: any,
+    host: string,
+    authHandlers: trc.IRequestHandler[],
+    requestOptions: IRequestOptions
+  ): Promise<Response<Result>> {
+    let client = new RestClient(id, host, authHandlers, requestOptions);
+    return new Promise((resolve, reject) => {
+      client
+        .update<Result>(this.str(), content)
+        .then((response) => {
+          resolve(new Response(response.statusCode, response.result));
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * HTTP DELETE
+   *
+   * @param id
+   * @param host
+   * @param authHandlers
+   * @param requestOptions
+   */
   public del<Result>(
     id: string,
     host: string,
@@ -191,7 +254,8 @@ export class RestUri {
       let file: NodeJS.WritableStream = fs.createWriteStream(tempFilePath);
       let client = new HttpClient(id, authHandlers, requestOptions);
       client
-        .get(host + '/' + this.str()).then((r) => {
+        .get(host + '/' + this.str())
+        .then((r) => {
           r.message.pipe(file).on('close', () => {
             let body: string = fs.readFileSync(tempFilePath).toString();
             let result: Result = JSON.parse(body);

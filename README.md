@@ -29,7 +29,7 @@ Create your REST client.
  * @param host           Host where crucible/fisheye runs (e.g.: https://crucible.example.com:443)
  * @param username       Username to authenticate
  * @param password       Password to authenticate
- * @param storeSession   If set to true, only the first request is sent with basic auth and all
+ * @param useAccessToken If set to true, only the first request is sent with basic auth and all
  *                       subsequent requests will use an access token.
  *                       (default: true)
  * @param ignoreSslError Set to true if https connections should not be validated.
@@ -55,7 +55,7 @@ connector
 ## What's next?
 
 - Better authenticating
-- The remaining [Fisheye API](https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html)
+- Implement the remaining [Fisheye API](https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html) and [Crucible/Fisheye Common API](https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html).
 
 ## Acknowledgements
 

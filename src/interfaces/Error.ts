@@ -8,7 +8,7 @@ export type ErrorCode =
   | 'ReviewContentTooLarge';
 
 export interface Error {
-  code: ErrorCode;
+  code?: ErrorCode;
   message: string;
 }
 

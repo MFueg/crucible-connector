@@ -16,6 +16,8 @@
  * https://github.com/Microsoft/typed-rest-client/tree/db388ca114dffc1e241ae81e6f3b9cd022c5b281/samples
  */
 
+export type IndexingStatus = any; // TODO: evaluate this type
+
 import { BasicCredentialHandler, PersonalAccessTokenCredentialHandler } from 'typed-rest-client/Handlers';
 import { User, UserProfile } from './interfaces/User';
 import {
@@ -31,7 +33,7 @@ import {
   ReviewItems
 } from './interfaces/Review';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { IRequestHandler } from 'typed-rest-client/Interfaces';
+import { IRequestHandler, IHeaders } from 'typed-rest-client/Interfaces';
 import { Error, ReviewError } from './interfaces/Error';
 import { Change, Listing, AddChangeSet } from './interfaces/ChangeSet';
 import { VersionedEntity } from './interfaces/Version';
@@ -45,6 +47,18 @@ import { Reviewers } from './interfaces/Reviewer';
 import { ReviewRevisions } from './interfaces/ReviewRevision';
 import { RestUri, IRequestOptions } from './util/restUri';
 import { normalize } from 'path';
+import { ServerStatus } from './interfaces/fecru/ServerStatus';
+import {
+  UserGroup,
+  UserGroupContent,
+  UserName,
+  UserCreate,
+  UserData,
+  UserPassword,
+  UserGroupName
+} from './interfaces/fecru/UserGroup';
+import { PagedRequestOptions, PagedResponse } from './interfaces/fecru/PagedResponse';
+import { Project, ProjectUpdate } from './interfaces/fecru/Project';
 
 /**
  * Options used to search repositories with `searchRepositories`.
@@ -154,6 +168,30 @@ export interface SearchReviewsOptionsI {
   readonly toDate?: Date;
 }
 
+export interface GetProjectsPagedOptionsI extends PagedRequestOptions {
+  /**
+   * project's name part filter
+   */
+  readonly name?: string;
+
+  /**
+   * project's key part filter
+   */
+  readonly key?: string;
+
+  /**
+   * project's default repository key part filter
+   */
+  readonly defaultRepositoryName?: string;
+
+  /**
+   * project's permission scheme pare name filter
+   */
+  readonly permissionSchemeName?: string;
+}
+
+export type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
+
 /**
  * Connector class that provides all available API methods of crucible/fisheye
  * and that handles authentication
@@ -173,68 +211,841 @@ export class CrucibleConnector {
     private readonly host: string,
     readonly username: string,
     readonly password: string,
-    private readonly storeSession: boolean = true,
+    private readonly useAccessToken: boolean = true,
     private readonly ignoreSslError: boolean = false
   ) {
     this.basicAuthHandler = new BasicCredentialHandler(this.username, this.password);
-    if (this.storeSession) {
-      this.refreshAccessToken();
-    }
+    this.refreshAccessToken();
   }
 
   private basicAuthHandler: IRequestHandler;
   private tokenHandler: IRequestHandler | undefined;
-  private get authHandler(): IRequestHandler[] {
-    return this.tokenHandler ? [this.tokenHandler, this.basicAuthHandler] : [this.basicAuthHandler];
+
+  /**
+   * Returns an array of available authentication handlers.
+   * The handler `tokenHandler` is preferred over the `basicAuthHandler` if set.
+   */
+  private getAuthHandlers(): IRequestHandler[] {
+    return this.tokenHandler
+      ? [this.tokenHandler, this.basicAuthHandler] // maybe here only the token handler should be returned?
+      : [this.basicAuthHandler];
   }
 
-  private get queryOptions(): IRequestOptions {
+  /**
+   * Creates a new request options object.
+   * @param requestMimeType Mime type for the request's content
+   * @param resultMimeType Mime type for the response's content
+   */
+  private cerateQueryOptions(
+    requestMimeType: ContentType = 'application/json',
+    resultMimeType: ContentType = 'application/json'
+  ): IRequestOptions {
     return {
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
+        'Content-Type': requestMimeType,
+        Accept: resultMimeType
       },
       ignoreSslError: this.ignoreSslError
     };
   }
 
-  private get uriUsers() {
-    return new RestUri('/rest-service/users-v1');
-  }
+  /***********************************************************************************************
+   *
+   *                                       C O M M O N
+   *
+   ***********************************************************************************************/
 
-  private get uriSearch() {
-    return new RestUri('/rest-service/search-v1');
-  }
+  /********************** AUTH API **********************/
+  // More details at: https://developer.atlassian.com/server/fisheye-crucible/authenticating-rest-requests/
 
-  private get uriRepositories() {
-    return new RestUri('/rest-service/repositories-v1');
-  }
-
-  private get uriReviews() {
-    return new RestUri('/rest-service/reviews-v1');
-  }
-
+  /**
+   * Uri for requests to the authentication domain
+   */
   private get uriAuth() {
     return new RestUri('/rest-service-fecru/auth');
   }
 
+  /**
+   * Refreshes the internal stored access token if `useAccessToken` is enabled.
+   */
   private refreshAccessToken() {
-    this.uriAuth
-      .create<void, Authentication | Error>('get-auth-token', undefined, this.host, this.authHandler, this.queryOptions)
-      .then((r) => {
-        let auth = r.get<Authentication>(HttpCodes.OK);
-        if (auth) {
-          this.tokenHandler = new PersonalAccessTokenCredentialHandler(auth.token);
-        } else {
+    if (this.useAccessToken) {
+      this.uriAuth
+        .addPart('login')
+        .create<Authentication | Error>(
+          'get-auth-token',
+          `userName=${this.username}&password=${this.password}`,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions('application/x-www-form-urlencoded')
+        )
+        .then((r) => {
+          let auth = r.get<Authentication>(HttpCodes.OK);
+          if (auth) {
+            this.tokenHandler = new PersonalAccessTokenCredentialHandler(auth.token);
+          } else {
+            this.tokenHandler = undefined;
+          }
+        })
+        .catch(() => {
           this.tokenHandler = undefined;
-        }
-      })
-      .catch(() => {
-        this.tokenHandler = undefined;
-      });
+        });
+    } else {
+      this.tokenHandler = undefined;
+    }
   }
 
+  /********************** INDEXING API **********************/
+  // TODO: This part of the API is not completely documented - must be evaluated
+  /**
+   * Uri for requests to the indexing domain
+   */
+  private get uriIndexing() {
+    return new RestUri('/rest-service-fecru/indexing-status-v1');
+  }
+
+  /**
+   * Returns indexing status of given repository.
+   * TODO: Evaluate return type!
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:indexing-status-v1:status:repository
+   *
+   * @param repositoryId the key of the repository to get status of
+   */
+  public getRepositoryIndexingStatus(repositoryId: string): Promise<IndexingStatus> {
+    return new Promise((resolve, reject) => {
+      this.uriIndexing
+        .addPart('status')
+        .addPart(repositoryId)
+        .get<IndexingStatus | Error>(
+          'get-repository-indexing-status',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let status = r.get<IndexingStatus>(HttpCodes.OK);
+          if (status) {
+            resolve(status);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /********************** USER PREFERENCE API **********************/
+  // TODO: This part of the API is not completely documented - must be evaluated
+  /**
+   * Uri for requests to the user domain
+   */
+  // private get uriUserPreferences() {
+  //   return new RestUri('/rest-service-fecru/user-prefs-v1');
+  // }
+
+  /**
+   * TODO: Missing documentation
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:user-prefs-v1:property
+   */
+
+  /**
+   * TODO: Missing documentation
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:user-prefs-v1:repository:property
+   */
+
+  /********************** SERVER API **********************/
+
+  /**
+   * Uri for requests to the indexing domain
+   */
+  private get uriServer() {
+    return new RestUri('/rest-service-fecru/server-v1');
+  }
+
+  /**
+   * Provides general information about the server's configuration.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:server-v1
+   */
+  public getServerStatus(): Promise<ServerStatus> {
+    return new Promise((resolve, reject) => {
+      this.uriServer
+        .get<ServerStatus | Error>('get-server-status', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          let status = r.get<ServerStatus>(HttpCodes.OK);
+          if (status) {
+            resolve(status);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /********************** ADMIN API **********************/
+
+  /**
+   * Uri for requests to the indexing domain
+   */
+  private get uriAdmin() {
+    return new RestUri('/rest-service-fecru/admin');
+  }
+
+  /**
+   * Creates a new user group.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups
+   *
+   * @param group New user group to create.
+   */
+  public createUserGroup(group: UserGroup): Promise<UserGroup> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('groups')
+        .create<UserGroup | Error>(
+          'create-user-group',
+          group,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<UserGroup>(201);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   *  Retrieve a page of groups.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups
+   *
+   * @param prefix filter groups by name prefix
+   * @param options page options.
+   */
+  public getUserGroupsPaged(prefix: string, options: PagedRequestOptions): Promise<PagedResponse<UserGroup>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('groups')
+        .setArg('prefix', prefix)
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<UserGroup> | Error>(
+          'get-paged-user-groups',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<UserGroup>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Retrieve a group by name.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups:name
+   *
+   * @param groupName Name of the required group
+   */
+  public getUserGroup(groupName: string): Promise<UserGroup> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('groups')
+        .addPart(groupName)
+        .get<UserGroup | Error>('get-user-group', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          let result = r.get<UserGroup>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Updates an existing group.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups:name
+   *
+   * @param group Group to be updated. The name is used to identify the group and won't be updated.
+   */
+  public updateUserGroup(group: UserGroup): Promise<UserGroupContent> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('groups')
+        .addPart(group.name)
+        .replace<UserGroupContent | Error>(
+          'update-user-group',
+          { admin: group.admin }, // only the admin field allowed
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<UserGroupContent>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Deletes a group by name.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups:name
+   *
+   * @param groupName Name of the required group
+   */
+  public deleteUserGroup(groupName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('groups')
+        .addPart(groupName)
+        .del<void | Error>('delete-user-group', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          if (r.statusCode == 204) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Lists group's user names.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups:name:users
+   *
+   * @param groupName Name of the requested user group.
+   * @param options page options.
+   */
+  public getUsersOfUserGroupPaged(groupName: string, options: PagedRequestOptions): Promise<PagedResponse<UserName>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('groups')
+        .addPart(groupName)
+        .addPart('users')
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<UserName> | Error>(
+          'get-paged-users-of-user-group',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Adds a user to a group
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups:name:users
+   *
+   * @param groupName Name of the requested user group.
+   * @param userName User to add.
+   */
+  public addUserToUserGroup(groupName: string, userName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const user: UserName = { name: userName };
+      this.uriAdmin
+        .addPart('groups')
+        .addPart(groupName)
+        .replace<UserGroupContent | Error>(
+          'add-user-to-user-group',
+          user,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          if (r.statusCode == 204 || r.statusCode == 304) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Removes a user from a group
+   * FIXME: Can't be implemented yet, because the typed-rest-client does not provide content at the `del` method.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:groups:name:users
+   *
+   * @param groupName Name of the requested user group.
+   * @param userName User to be removed.
+   */
+  // public removeUserFromUserGroup(groupName: string, userName: string): Promise<void> {
+  //   return new Promise((resolve, reject) => {
+  //     const user: UserName = { name: userName };
+  //     this.uriAdmin
+  //       .addPart('groups')
+  //       .addPart(groupName)
+  //       .del<void | Error>('delete-user-from-user-group', user, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+  //       .then((r) => {
+  //         if (r.statusCode == 204 || r.statusCode == 304) {
+  //           resolve();
+  //         } else {
+  //           reject(r.getError());
+  //         }
+  //       })
+  //       .catch((e) => {
+  //         reject(e);
+  //       });
+  //   });
+  // }
+
+  /**
+   * Creates a new user. Tries to add the user to fisheye-users and crucible-users groups if those exist.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:users
+   *
+   * @param user New user group to create.
+   */
+  public createUser(user: UserCreate): Promise<UserData> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('users')
+        .create<UserGroup | Error>('create-user', user, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          let result = r.get<UserData>(201);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Retrieve a page of users.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:users
+   *
+   * @param options page options.
+   */
+  public getUsersPaged(options: PagedRequestOptions): Promise<PagedResponse<UserData>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('users')
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<UserGroup> | Error>(
+          'get-paged-users',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<UserData>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Retrieve a user by name.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:users:name
+   *
+   * @param userName Name of the requested user.
+   */
+  public getUser(userName: string): Promise<UserData> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('users')
+        .addPart(userName)
+        .get<UserData | Error>('get-user-data', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          let result = r.get<UserData>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Updates an existing user.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:users:name
+   *
+   * @param userName Name of the requested user.
+   * @param password New password.
+   */
+  public updaterUser(userName: string, password: string): Promise<UserData> {
+    return new Promise((resolve, reject) => {
+      const user: UserPassword = { password: password };
+      this.uriAdmin
+        .addPart('users')
+        .addPart(userName)
+        .replace<UserData | Error>(
+          'update-user-data',
+          user,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<UserData>(HttpCodes.OK);
+          if (result) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Deletes a user by name
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:users:name
+   *
+   * @param userName User to be removed.
+   */
+  public removeUser(userName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('users')
+        .addPart(userName)
+        .del<void | Error>('delete-user', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          if (r.statusCode == 204) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Lists user's group names
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:users:name:groups
+   *
+   * @param userName Name of the requested user.
+   * @param options page options.
+   */
+  public getUserGroupsOfUserPaged(
+    userName: string,
+    options: PagedRequestOptions
+  ): Promise<PagedResponse<UserGroupName>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('users')
+        .addPart(userName)
+        .addPart('groups')
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<UserGroupName> | Error>(
+          'get-paged-users-of-user-group',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<UserGroupName>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  // TODO: Some methods skipped - might be implemented later
+
+  /**
+   * Creates a new project.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects
+   *
+   * @param project New project to create.
+   */
+  public createProject(project: Project): Promise<Project> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .create<Project | Error>(
+          'create-project',
+          project,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<Project>(201);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Retrieve a page of projects.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects
+   *
+   * @param options page options.
+   */
+  public getProjectsPaged(options: GetProjectsPagedOptionsI): Promise<PagedResponse<Project>> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .setArg('name', options.name)
+        .setArg('key', options.key)
+        .setArg('defaultRepositoryName', options.defaultRepositoryName)
+        .setArg('permissionSchemeName', options.permissionSchemeName)
+        .setArg('start', options.start)
+        .setArg('limit', options.limit)
+        .get<PagedResponse<Project> | Error>(
+          'get-paged-projects',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<Project>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Retrieve a project by key.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key
+   *
+   * @param projectKey project key
+   */
+  public getProject(projectKey: string): Promise<Project> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .get<Project | Error>('get-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          let result = r.get<Project>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Updates an existing project.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key
+   *
+   * @param projectKey project key
+   * @param project Project to be updated.
+   */
+  public updateProject(projectKey: string, project: ProjectUpdate): Promise<Project> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .replace<Project | Error>(
+          'update-project',
+          project,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<Project>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Deletes a project by key (including all reviews in this project).
+   * Use PUT /rest-service-fecru/admin/projects/[sourceProjectKey]/move-reviews/[destinationProjectKey]
+   * to move reviews to another project.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key
+   *
+   * @param projectKey Project to be deleted.
+   * @param deleteProjectReviews if true deletes reviews in project (default: false)
+   */
+  public deleteProject(projectKey: string, deleteProjectReviews?: boolean): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKey)
+        .setArg('deleteProjectReviews', deleteProjectReviews)
+        .del<void | Error>('delete-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          if (r.statusCode == 204) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Move reviews and snippets from source project to destination project.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:sourceProjectKey:move-reviews:destinationProjectKey
+   *
+   * @param projectKeyFrom project key of reviews and snippets source project
+   * @param projectKeyTo project key of reviews and snippets destination project
+   */
+  public moveProjectContent(projectKeyFrom: string, projectKeyTo: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.uriAdmin
+        .addPart('projects')
+        .addPart(projectKeyFrom)
+        .addPart('move-reviews')
+        .addPart(projectKeyTo)
+        .replace<void | Error>(
+          'move-project-content',
+          undefined,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          if (r.statusCode == 204) {
+            resolve();
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /***********************************************************************************************
+   *
+   *                                      C R U C I B L E
+   *
+   ***********************************************************************************************/
+
   /********************** USER API **********************/
+
+  /**
+   * Uri for requests to the user domain
+   */
+  private get uriUsers() {
+    return new RestUri('/rest-service/users-v1');
+  }
 
   /**
    * Get a list of all the users. You can also ask for a set of users.
@@ -248,7 +1059,7 @@ export class CrucibleConnector {
     return new Promise((resolve, reject) => {
       this.uriUsers
         .setArg('username', usernameFilter)
-        .get<User[] | Error>('get-users', this.host, this.authHandler, this.queryOptions)
+        .get<User[] | Error>('get-users', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let users = r.get<User[]>(HttpCodes.OK);
           if (users) {
@@ -276,7 +1087,7 @@ export class CrucibleConnector {
       this.uriUsers
         .addPart(repository)
         .addPart(username)
-        .get<User>('get-user-committer', this.host, this.authHandler, this.queryOptions)
+        .get<User>('get-user-committer', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let user = r.get<User>(HttpCodes.OK);
           if (user) {
@@ -302,7 +1113,7 @@ export class CrucibleConnector {
     return new Promise((resolve, reject) => {
       this.uriUsers
         .addPart(username)
-        .get<UserProfile>('get-user-profile', this.host, this.authHandler, this.queryOptions)
+        .get<UserProfile>('get-user-profile', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let profile = r.get<UserProfile>(HttpCodes.OK);
           if (profile) {
@@ -320,6 +1131,13 @@ export class CrucibleConnector {
   /********************** SEARCH API **********************/
 
   /**
+   * Uri for requests to the search domain
+   */
+  private get uriSearch() {
+    return new RestUri('/rest-service/search-v1');
+  }
+
+  /**
    * Search for reviews where the name, description, state or permaId contain the specified term.
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:search-v1:reviews
@@ -332,7 +1150,7 @@ export class CrucibleConnector {
       this.uriSearch
         .setArg('term', term)
         .setArg('maxReturn', maxReturn)
-        .get<Reviews | Error>('search-review', this.host, this.authHandler, this.queryOptions)
+        .get<Reviews | Error>('search-review', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let reviews = r.get<Reviews>(HttpCodes.OK);
           if (reviews) {
@@ -360,7 +1178,7 @@ export class CrucibleConnector {
       this.uriSearch
         .setArg('jiraKey', jiraKey)
         .setArg('maxReturn', maxReturn)
-        .get<Reviews | Error>('get-review-for-issue', this.host, this.authHandler, this.queryOptions)
+        .get<Reviews | Error>('get-review-for-issue', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let reviews = r.get<Reviews>(HttpCodes.OK);
           if (reviews) {
@@ -378,6 +1196,13 @@ export class CrucibleConnector {
   /********************** REPOSITORY API **********************/
 
   /**
+   * Uri for requests to the repository domain
+   */
+  private get uriRepositories() {
+    return new RestUri('/rest-service/repositories-v1');
+  }
+
+  /**
    * Returns a list of all repositories. This includes plugin provided repositories.
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:repositories-v1
@@ -392,7 +1217,7 @@ export class CrucibleConnector {
         .setArg('available', options.available)
         .setArgs('type', options.types, 'repeat')
         .setArg('limit', options.limit)
-        .get<Repositories | Error>('search-repositories', this.host, this.authHandler, this.queryOptions)
+        .get<Repositories | Error>('search-repositories', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Repositories>(HttpCodes.OK);
           if (result) {
@@ -424,7 +1249,7 @@ export class CrucibleConnector {
         .addPart(repository)
         .addPart(revision)
         .addPart(path)
-        .loadFile<string>('get-file-revision-content', this.host, this.authHandler, this.queryOptions)
+        .loadFile<string>('get-file-revision-content', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<string>(HttpCodes.OK);
           if (content) {
@@ -453,7 +1278,7 @@ export class CrucibleConnector {
         .addPart('change')
         .addPart(repository)
         .addPart(revision)
-        .get<Change>('get-changeset', this.host, this.authHandler, this.queryOptions)
+        .get<Change>('get-changeset', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Change>(HttpCodes.OK);
           if (content) {
@@ -494,7 +1319,7 @@ export class CrucibleConnector {
         .setArg('newestCsid', options.newestCsId)
         .setArg('includeNewest', options.includeNewest)
         .setArg('max', options.max)
-        .get<Change>('search-changesets', this.host, this.authHandler, this.queryOptions)
+        .get<Change>('search-changesets', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Change>(HttpCodes.OK);
           if (content) {
@@ -530,7 +1355,7 @@ export class CrucibleConnector {
         .addPart(repository)
         .addPart(revision)
         .addPart(path)
-        .get<VersionedEntity>('get-versioned-entity', this.host, this.authHandler, this.queryOptions)
+        .get<VersionedEntity>('get-versioned-entity', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<VersionedEntity>(HttpCodes.OK);
           if (content) {
@@ -560,7 +1385,7 @@ export class CrucibleConnector {
     return new Promise((resolve, reject) => {
       this.uriRepositories
         .addPart(repository)
-        .get<Repository>('get-repository', this.host, this.authHandler, this.queryOptions)
+        .get<Repository>('get-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Repository>(HttpCodes.OK);
           if (content) {
@@ -589,7 +1414,7 @@ export class CrucibleConnector {
         .addPart('browse')
         .addPart(repository)
         .addPart(path)
-        .get<Repository>('browse-repository', this.host, this.authHandler, this.queryOptions)
+        .get<Repository>('browse-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Listing>(HttpCodes.OK);
           if (content) {
@@ -621,7 +1446,7 @@ export class CrucibleConnector {
         .addPart(repository)
         .addPart(revision)
         .addPart(path)
-        .get<History>('browse-repository', this.host, this.authHandler, this.queryOptions)
+        .get<History>('browse-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<History>(HttpCodes.OK);
           if (content) {
@@ -639,6 +1464,13 @@ export class CrucibleConnector {
   /********************** REVIEW API **********************/
 
   /**
+   * Uri for requests to the review domain
+   */
+  private get uriReviews() {
+    return new RestUri('/rest-service/reviews-v1');
+  }
+
+  /**
    * Get all reviews as a list of ReviewData structures.
    * ! Note that this may return a lot of data, so using `filterReviews` is usually better.
    *
@@ -651,7 +1483,7 @@ export class CrucibleConnector {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .setArgs('state', states, 'join')
-        .get<Reviews>('get-reviews', this.host, this.authHandler, this.queryOptions)
+        .get<Reviews>('get-reviews', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
           if (content) {
@@ -691,7 +1523,7 @@ export class CrucibleConnector {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .setArg('state', state)
-        .create<CreateReview, Review | Error>('create-review', review, this.host, this.authHandler, this.queryOptions)
+        .create<Review | Error>('create-review', review, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Review>(HttpCodes.OK);
           if (content) {
@@ -718,7 +1550,7 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart('metrics')
         .addPart(version)
-        .get<ReviewMetrics>('get-review-metrics', this.host, this.authHandler, this.queryOptions)
+        .get<ReviewMetrics>('get-review-metrics', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<ReviewMetrics>(HttpCodes.OK);
           if (content) {
@@ -749,7 +1581,7 @@ export class CrucibleConnector {
         .addPart('comments')
         .addPart(commentId)
         .setArg('render', render)
-        .get<Comment | Error>('get-review-comment', this.host, this.authHandler, this.queryOptions)
+        .get<Comment | Error>('get-review-comment', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comment>(HttpCodes.OK);
           if (content) {
@@ -778,7 +1610,7 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('comments')
         .addPart(commentId)
-        .del<Comment | Error>('delete-review-comment', this.host, this.authHandler, this.queryOptions)
+        .del<Comment | Error>('delete-review-comment', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
@@ -806,12 +1638,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('comments')
         .addPart(commentId)
-        .update<GeneralComment, void | Error>(
+        .create<void | Error>(
           'update-review-comment',
           comment,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -852,7 +1684,13 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('addFile')
-        .uploadFile<ReviewItem | Error>('upload-file-to-review', this.host, stream, this.authHandler, this.queryOptions)
+        .uploadFile<ReviewItem | Error>(
+          'upload-file-to-review',
+          this.host,
+          stream,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let content = r.get<ReviewItem>(HttpCodes.OK);
           if (content) {
@@ -876,7 +1714,7 @@ export class CrucibleConnector {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart('versionInfo')
-        .get<VersionInfo>('get-version-info', this.host, this.authHandler, this.queryOptions)
+        .get<VersionInfo>('get-version-info', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<VersionInfo>(HttpCodes.OK);
           if (content) {
@@ -905,7 +1743,7 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart('details')
         .setArgs('state', states, 'join') // TODO: Check
-        .get<Reviews>('get-reviews-detailed', this.host, this.authHandler, this.queryOptions)
+        .get<Reviews>('get-reviews-detailed', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
           if (content) {
@@ -936,7 +1774,7 @@ export class CrucibleConnector {
         uri.addPart('details');
       }
       uri
-        .get<Reviews>(id, this.host, this.authHandler, this.queryOptions)
+        .get<Reviews>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
           if (content) {
@@ -1005,7 +1843,7 @@ export class CrucibleConnector {
         .setArg('project', options.project)
         .setArg('fromDate', options.fromDate ? options.fromDate.getMilliseconds() : undefined)
         .setArg('toDate', options.toDate ? options.toDate.getMilliseconds() : undefined)
-        .get<Reviews>(id, this.host, this.authHandler, this.queryOptions)
+        .get<Reviews>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
           if (content) {
@@ -1064,7 +1902,7 @@ export class CrucibleConnector {
         .addPart(commentId)
         .addPart('replies')
         .setArg('render', render)
-        .get<Comments | Error>('get-comment-replies', this.host, this.authHandler, this.queryOptions)
+        .get<Comments | Error>('get-comment-replies', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
           if (content) {
@@ -1096,12 +1934,12 @@ export class CrucibleConnector {
         .addPart('comments')
         .addPart(commentId)
         .addPart('replies')
-        .create<GeneralComment, Comment | Error>(
+        .create<Comment | Error>(
           'add-comment-reply',
           reply,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let content = r.get<Comment>(HttpCodes.OK);
@@ -1130,12 +1968,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('comments')
         .addPart('markAllAsRead')
-        .create<void, Review | Error>(
+        .create<Review | Error>(
           'mark-all-review-comments-as-read',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let content = r.get<Review>(HttpCodes.OK);
@@ -1166,12 +2004,12 @@ export class CrucibleConnector {
         .addPart('comments')
         .addPart(commentId)
         .addPart('markAsRead')
-        .create<void, Comment | Error>(
+        .create<Comment | Error>(
           'mark-review-comment-as-read',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let content = r.get<Comment>(HttpCodes.OK);
@@ -1202,12 +2040,12 @@ export class CrucibleConnector {
         .addPart('comments')
         .addPart(commentId)
         .addPart('markAsLeaveUnread')
-        .create<void, Comment | Error>(
+        .create<Comment | Error>(
           'mark-review-comment-as-leave-unread',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let content = r.get<Comment>(HttpCodes.OK);
@@ -1246,12 +2084,12 @@ export class CrucibleConnector {
         .addPart(commentId)
         .addPart('replies')
         .addPart(replyId)
-        .create<GeneralComment, void | Error>(
+        .create<void | Error>(
           'update-review-comment-reply',
           reply,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1283,7 +2121,7 @@ export class CrucibleConnector {
         .addPart(commentId)
         .addPart('replies')
         .addPart(replyId)
-        .del<void | Error>('delete-review-comment-reply', this.host, this.authHandler, this.queryOptions)
+        .del<void | Error>('delete-review-comment-reply', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
@@ -1309,12 +2147,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('publish')
-        .create<void, void | Error>(
+        .create<void | Error>(
           'publish-draft-review-comments',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1343,12 +2181,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('publish')
         .addPart(commentId)
-        .create<void, void | Error>(
+        .create<void | Error>(
           'publish-draft-review-comment',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1377,12 +2215,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('complete')
         .setArg('ignoreWarnings', ignoreWarnings)
-        .create<void, void | ReviewError | Error>(
+        .create<void | ReviewError | Error>(
           'complete-review',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1416,12 +2254,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('uncomplete')
         .setArg('ignoreWarnings', ignoreWarnings)
-        .create<void, void | ReviewError | Error>(
+        .create<void | ReviewError | Error>(
           'complete-review',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1461,12 +2299,12 @@ export class CrucibleConnector {
         .addPart('transition')
         .setArg('action', transition)
         .setArg('ignoreWarnings', ignoreWarnings)
-        .create<void, void | ReviewError | Error>(
+        .create<void | ReviewError | Error>(
           'change-review-state',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let result = r.get<Review>(HttpCodes.OK);
@@ -1500,13 +2338,7 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('close')
-        .create<CloseReviewSummary, void | Error>(
-          'close-review',
-          summary,
-          this.host,
-          this.authHandler,
-          this.queryOptions
-        )
+        .create<void | Error>('close-review', summary, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
@@ -1532,12 +2364,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('remind')
-        .create<void, void | Error>(
+        .create<void | Error>(
           'remind-incomplete-reviewers',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1568,7 +2400,7 @@ export class CrucibleConnector {
       }
       uri
         .setArg('path', normalize(path).replace(/^\/+/, '')) // remove leading slash
-        .get<Reviews | Error>(id, this.host, this.authHandler, this.queryOptions)
+        .get<Reviews | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Reviews>(HttpCodes.OK);
           if (result) {
@@ -1627,7 +2459,7 @@ export class CrucibleConnector {
         uri.addPart('details');
       }
       uri
-        .get<Review | Error>(id, this.host, this.authHandler, this.queryOptions)
+        .get<Review | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Review>(HttpCodes.OK);
           if (result) {
@@ -1665,7 +2497,7 @@ export class CrucibleConnector {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
-        .del<void | Error>('delete-review', this.host, this.authHandler, this.queryOptions)
+        .del<void | Error>('delete-review', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
@@ -1706,7 +2538,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('actions')
-        .get<ReviewTransitions | Error>('get-review-actions', this.host, this.authHandler, this.queryOptions)
+        .get<ReviewTransitions | Error>(
+          'get-review-actions',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<ReviewTransitions>(HttpCodes.OK);
           if (result) {
@@ -1734,7 +2571,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('actions')
-        .get<ReviewTransitions | Error>('get-review-transitions', this.host, this.authHandler, this.queryOptions)
+        .get<ReviewTransitions | Error>(
+          'get-review-transitions',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<ReviewTransitions>(HttpCodes.OK);
           if (result) {
@@ -1762,12 +2604,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('addChangeset')
-        .create<AddChangeSet, Review | Error>(
+        .create<Review | Error>(
           'add-review-change-set',
           changeSet,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let result = r.get<Review>(HttpCodes.OK);
@@ -1801,7 +2643,7 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('patch')
-        .create<Patch, Review | Error>('add-review-patch', patch, this.host, this.authHandler, this.queryOptions)
+        .create<Review | Error>('add-review-patch', patch, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Review>(HttpCodes.OK);
           if (result) {
@@ -1828,7 +2670,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('patch')
-        .get<PatchGroups | Error>('get-review-patch-groups', this.host, this.authHandler, this.queryOptions)
+        .get<PatchGroups | Error>(
+          'get-review-patch-groups',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<PatchGroups>(HttpCodes.OK);
           if (result) {
@@ -1868,12 +2715,12 @@ export class CrucibleConnector {
         .addPart(reviewItemId)
         .addPart('revisions')
         .setArgs('rev', revisions, 'join') // TODO: check
-        .create<void, ReviewItem | Error>(
+        .create<ReviewItem | Error>(
           'add-revisions-to-review-item',
           undefined,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let result = r.get<ReviewItem>(HttpCodes.OK);
@@ -1912,7 +2759,12 @@ export class CrucibleConnector {
         .addPart(reviewItemId)
         .addPart('revisions')
         .setArgs('rev', revisions, 'join') // TODO: Check
-        .del<ReviewItem | Error>('remove-revisions-from-review-item', this.host, this.authHandler, this.queryOptions)
+        .del<ReviewItem | Error>(
+          'delete-revisions-from-review-item',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<ReviewItem>(HttpCodes.OK);
           if (result) {
@@ -1935,13 +2787,13 @@ export class CrucibleConnector {
    * @param reviewId review id (e.g. "CR-345").
    * @param reviewItemId review item id (e.g. "CFR-6312").
    */
-  public removeReviewItem(reviewId: string, reviewItemId: string): Promise<void> {
+  public deleteReviewItem(reviewId: string, reviewItemId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
         .addPart('reviewitems')
         .addPart(reviewItemId)
-        .del<void | Error>('remove-review-item', this.host, this.authHandler, this.queryOptions)
+        .del<void | Error>('delete-review-item', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
@@ -1969,7 +2821,7 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('reviewitems')
         .addPart(reviewItemId)
-        .del<ReviewItem | Error>('get-review-item', this.host, this.authHandler, this.queryOptions)
+        .del<ReviewItem | Error>('get-review-item', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<ReviewItem>(HttpCodes.OK);
           if (result) {
@@ -1998,7 +2850,7 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('comments')
         .setArg('render', render)
-        .get<Comments | Error>('get-review-comments', this.host, this.authHandler, this.queryOptions)
+        .get<Comments | Error>('get-review-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
           if (content) {
@@ -2026,12 +2878,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('comments')
-        .create<GeneralComment, Comment | Error>(
+        .create<Comment | Error>(
           'add-review-comment',
           comment,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let content = r.get<Comment>(HttpCodes.OK);
@@ -2062,7 +2914,12 @@ export class CrucibleConnector {
         .addPart('comments')
         .addPart('general')
         .setArg('render', render)
-        .get<Comments | Error>('get-review-general-comments', this.host, this.authHandler, this.queryOptions)
+        .get<Comments | Error>(
+          'get-review-general-comments',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
           if (content) {
@@ -2092,7 +2949,12 @@ export class CrucibleConnector {
         .addPart('comments')
         .addPart('versioned')
         .setArg('render', render)
-        .get<Comments | Error>('get-review-versioned-comments', this.host, this.authHandler, this.queryOptions)
+        .get<Comments | Error>(
+          'get-review-versioned-comments',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
           if (content) {
@@ -2124,7 +2986,7 @@ export class CrucibleConnector {
         .addPart(reviewItemId)
         .addPart('comments')
         .setArg('render', render)
-        .get<Comments | Error>('get-review-item-comments', this.host, this.authHandler, this.queryOptions)
+        .get<Comments | Error>('get-review-item-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
           if (content) {
@@ -2154,12 +3016,12 @@ export class CrucibleConnector {
         .addPart('reviewitems')
         .addPart(reviewItemId)
         .addPart('comments')
-        .create<Comments, Comments | Error>(
+        .create<Comments | Error>(
           'add-review-item-comments',
           comments,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
@@ -2183,13 +3045,13 @@ export class CrucibleConnector {
    * @param reviewId review id (e.g. "CR-345").
    * @param patchId the id of the patch (as returned by the '{id}/patch' resource)
    */
-  public removeReviewPatch(reviewId: string, patchId: string): Promise<PatchGroups> {
+  public deleteReviewPatch(reviewId: string, patchId: string): Promise<PatchGroups> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
         .addPart('patch')
         .addPart(patchId)
-        .del<PatchGroups | Error>('remove-review-patch', this.host, this.authHandler, this.queryOptions)
+        .del<PatchGroups | Error>('delete-review-patch', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<PatchGroups>(HttpCodes.OK);
           if (result) {
@@ -2216,7 +3078,7 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('reviewers')
-        .del<Reviewers | Error>('get-review-reviewers', this.host, this.authHandler, this.queryOptions)
+        .del<Reviewers | Error>('get-review-reviewers', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Reviewers>(HttpCodes.OK);
           if (result) {
@@ -2244,12 +3106,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('reviewers')
-        .create<string, Reviewers | Error>(
+        .create<Reviewers | Error>(
           'add-review-reviewers',
           reviewerIds.join(','),
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -2277,7 +3139,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('reviewers')
         .addPart('completed')
-        .get<Reviewers | Error>('get-review-reviewers-completed', this.host, this.authHandler, this.queryOptions)
+        .get<Reviewers | Error>(
+          'get-review-reviewers-completed',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<Reviewers>(HttpCodes.OK);
           if (result) {
@@ -2305,7 +3172,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('reviewers')
         .addPart('uncompleted')
-        .get<Reviewers | Error>('get-review-reviewers-uncompleted', this.host, this.authHandler, this.queryOptions)
+        .get<Reviewers | Error>(
+          'get-review-reviewers-uncompleted',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<Reviewers>(HttpCodes.OK);
           if (result) {
@@ -2328,13 +3200,13 @@ export class CrucibleConnector {
    * @param reviewId the id of the review
    * @param reviewerName the name of the reviewer.
    */
-  public removeReviewReviewer(reviewId: string, reviewerName: string): Promise<void> {
+  public deleteReviewReviewer(reviewId: string, reviewerName: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart(reviewId)
         .addPart('reviewers')
         .addPart(reviewerName)
-        .del<void | Error>('remove-review-reviewer', this.host, this.authHandler, this.queryOptions)
+        .del<void | Error>('delete-review-reviewer', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
@@ -2360,7 +3232,12 @@ export class CrucibleConnector {
       this.uriReviews
         .addPart(reviewId)
         .addPart('reviewitems')
-        .get<ReviewItems | Error>('get-review-review-items', this.host, this.authHandler, this.queryOptions)
+        .get<ReviewItems | Error>(
+          'get-review-review-items',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<ReviewItems>(HttpCodes.OK);
           if (result) {
@@ -2397,7 +3274,7 @@ export class CrucibleConnector {
         uri.addPart('details');
       }
       uri
-        .create<ReviewItem, ReviewItem | Error>(id, reviewItem, this.host, this.authHandler, this.queryOptions)
+        .create<ReviewItem | Error>(id, reviewItem, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<ReviewItem>(HttpCodes.OK);
           if (result) {
@@ -2444,12 +3321,12 @@ export class CrucibleConnector {
         .addPart(reviewId)
         .addPart('reviewitems')
         .addPart('revisions')
-        .create<ReviewRevisions, Review | Error>(
+        .create<Review | Error>(
           'add-review-revisions',
           revisions,
           this.host,
-          this.authHandler,
-          this.queryOptions
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
         )
         .then((r) => {
           let result = r.get<Review>(HttpCodes.OK);
@@ -2480,5 +3357,49 @@ export class CrucibleConnector {
     return this.addReviewReviewItemInternal(true, reviewId, reviewItem);
   }
 
-  // TODO: Missing method: https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:reviews-v1:id:reviewitems:riId:details
+  /**
+   * Sets the review item specified by itemId with the given reviewItem.
+   * The old review item is discarded. Can only perform this operation if the old review item specified by
+   * itemId can be deleted. The old review item's permId is not changed.
+   *
+   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:reviews-v1:id:reviewitems:riId:details
+   *
+   * @param reviewId a valid review id (e.g. "CR-345").
+   * @param reviewItemId a valid review item id (e.g. "CFR-5622").
+   * @param reviewItem New content for the review item.
+   */
+  public x(reviewId: string, reviewItemId: string, reviewItem: ReviewItem): Promise<ReviewItem> {
+    return new Promise((resolve, reject) => {
+      this.uriReviews
+        .addPart(reviewId)
+        .addPart('reviewitems')
+        .addPart(reviewItemId)
+        .addPart('details')
+        .replace<ReviewItem | Error>(
+          'update-user-group',
+          reviewItem,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<ReviewItem>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /***********************************************************************************************
+   *
+   *                                      F I S H E Y E
+   *
+   ***********************************************************************************************/
+  // TODO coming soon...
 }
