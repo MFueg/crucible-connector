@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import 'mocha';
 // import { ApiCrucible } from '../api';
-import * as mock from 'mockttp'
+import * as mock from 'mockttp';
 
 describe('Hello function', () => {
   const mockServer = mock.getLocal();

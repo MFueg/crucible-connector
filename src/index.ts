@@ -1,4 +1,4 @@
-export { ApiCrucible } from './api';
+export { CrucibleConnector } from './connector';
 
 export {
   ChangeSetExtended,

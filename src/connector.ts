@@ -103,7 +103,6 @@ export interface SearchChangeSetsOptionsI {
   readonly max?: string;
 }
 
-
 export interface SearchReviewsOptionsI {
   /**
    * A string that will be searched for in review titles.
@@ -155,12 +154,27 @@ export interface SearchReviewsOptionsI {
   readonly toDate?: Date;
 }
 
-export class ApiCrucible {
+/**
+ * Connector class that provides all available API methods of crucible/fisheye
+ * and that handles authentication
+ */
+export class CrucibleConnector {
+  /**
+   * Creates a new connector
+   * @param host Host where crucible/fisheye runs (e.g.: https://crucible.example.com:443)
+   * @param username Username to authenticate
+   * @param password Password to authenticate
+   * @param storeSession If set to true, only the first request is sent with basic auth and all
+   *                     subsequent requests will use an access token.
+   * @param ignoreSslError Set to true if https connections should not be validated.
+   *                       This options is useful when using self signed certificates.
+   */
   public constructor(
     private readonly host: string,
     readonly username: string,
     readonly password: string,
-    private readonly storeSession: boolean = true
+    private readonly storeSession: boolean = true,
+    private readonly ignoreSslError: boolean = false
   ) {
     this.basicAuthHandler = new BasicCredentialHandler(this.username, this.password);
     if (this.storeSession) {
@@ -180,7 +194,7 @@ export class ApiCrucible {
         'Content-Type': 'application/json',
         Accept: 'application/json'
       },
-      ignoreSslError: true
+      ignoreSslError: this.ignoreSslError
     };
   }
 
@@ -227,7 +241,8 @@ export class ApiCrucible {
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html#rest-service:users-v1
    *
-   * @param usernameFilter a username (or a few) to limit the number of returned entries. It will return only existing users.
+   * @param usernameFilter A username (or a few) to limit the number of returned entries.
+   *                       It will return only existing users.
    */
   public getUsers(usernameFilter: string[] = []): Promise<User[]> {
     return new Promise((resolve, reject) => {
@@ -369,9 +384,7 @@ export class ApiCrucible {
    *
    * @param options Options to search repositories
    */
-  public searchRepositories(
-    options: SearchRepositoriesOptionsI
-  ): Promise<Repositories> {
+  public searchRepositories(options: SearchRepositoriesOptionsI): Promise<Repositories> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
         .setArg('name', options.name)
@@ -466,14 +479,10 @@ export class ApiCrucible {
    * @param repository the key of the Crucible SCM plugin repository.
    * @param path only show change sets which contain at least one revision with a path under this path.
    *             Changesets with some revisions outside this path still include all revisions.
-   *             i.e. Revisions outside the path are *not* excluded from the change set.
+   *             i.e. Revisions outside the path are **not** excluded from the change set.
    * @param options Options to search change sets.
    */
-  public searchChangeSets(
-    repository: string,
-    path: string,
-    options: SearchChangeSetsOptionsI
-  ): Promise<Change> {
+  public searchChangeSets(repository: string, path: string, options: SearchChangeSetsOptionsI): Promise<Change> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
         .addPart('changes')
@@ -512,7 +521,8 @@ export class ApiCrucible {
    *
    * @param repository the key of the Crucible SCM plugin repository.
    * @param revision the SCM revision string.
-   * @param path the path of a file or versioned directory (note that versioned directories are not supported by all SCM plugins).
+   * @param path the path of a file or versioned directory
+   *             (note that versioned directories are not supported by all SCM plugins).
    */
   public getVersionedEntity(repository: string, revision: string, path: string): Promise<VersionedEntity> {
     return new Promise((resolve, reject) => {
@@ -975,10 +985,7 @@ export class ApiCrucible {
    * @param detailed set to true if the detailed api should be used.
    * @param options  options to search for reviews.
    */
-  private searchReviewsInternal(
-    detailed: boolean,
-    options: SearchReviewsOptionsI
-  ): Promise<Reviews> {
+  private searchReviewsInternal(detailed: boolean, options: SearchReviewsOptionsI): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'search-reviews-detailed' : 'search-reviews';
       let uri = this.uriReviews.addPart('filter');

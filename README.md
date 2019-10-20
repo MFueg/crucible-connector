@@ -1,8 +1,8 @@
 # Crucible Connector
 
-A REST client for [Atlassian's Crucible](https://www.atlassian.com/de/software/crucible).
+A typed JavaScript REST client for [Atlassian's Crucible](https://www.atlassian.com/de/software/crucible).
 
-Still under heavy development - not much tested (Coming soon).
+NOTICE: This package is currently under heavy development and not yet much tested (coming soon).
 
 ## Installation
 
@@ -12,11 +12,45 @@ npm install --save crucible-connector
 
 ## Features
 
-- Initial implementation of the [Core API](https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/crucible.html).
+- Create a REST client to communicate with your Crucible/Fisheye server.
+- Call all available methods of the [Crucible API](https://docs.atlassian.com/fisheye-crucible/latest/wadl/crucible.html).
+- _Coming soon:_ Call all available methods of the [Crucible/Fisheye Common API](https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html).
+- _Coming soon:_ Call all available methods of the [Fisheye API](https://docs.atlassian.com/fisheye-crucible/latest/wadl/fisheye.html).
 
-### Examples
+More details about the API can be found at the [Crucible REST API Guide](https://developer.atlassian.com/server/fisheye-crucible/rest-api-guide/).
 
-- coming soon
+### Usage
+
+Create your REST client.
+
+```js
+/**
+ * Create a new connector
+ * @param host           Host where crucible/fisheye runs (e.g.: https://crucible.example.com:443)
+ * @param username       Username to authenticate
+ * @param password       Password to authenticate
+ * @param storeSession   If set to true, only the first request is sent with basic auth and all
+ *                       subsequent requests will use an access token.
+ *                       (default: true)
+ * @param ignoreSslError Set to true if https connections should not be validated.
+ *                       This options is useful when using self signed certificates.
+ *                       (default: false)
+ */
+const connector = new CrucibleConnector('https://crucible.example.com:443', 'user', 'password');
+```
+
+Now start to communicate:
+
+```js
+connector
+  .searchRepositories({ types: ['git'] })
+  .then((result) => {
+    console.log(result.repoData.map((repo) => repo.name).join(', '));
+  })
+  .catch((error) => {
+    console.log(error);
+  });
+```
 
 ## What's next?
 
