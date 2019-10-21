@@ -1,4 +1,4 @@
-import { Version } from '../crucible/Version';
+import { Version } from '../../crucible/interfaces/Version';
 
 export interface ServerStatus {
   timeZone: string;

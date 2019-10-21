@@ -36,13 +36,13 @@ Create your REST client.
  *                       This options is useful when using self signed certificates.
  *                       (default: false)
  */
-const connector = new CrucibleConnector('https://crucible.example.com:443', 'user', 'password');
+const connector = new Connector('https://crucible.example.com:443', 'user', 'password');
 ```
 
-Now start to communicate:
+Now start to communicate via `common`, `crucible` and `fisheye`:
 
 ```js
-connector
+connector.crucible
   .searchRepositories({ types: ['git'] })
   .then((result) => {
     console.log(result.repoData.map((repo) => repo.name).join(', '));
@@ -55,11 +55,11 @@ connector
 ## What's next?
 
 - Better authenticating
-- Implement the remaining [Fisheye API](https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html) and [Crucible/Fisheye Common API](https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html).
+- Implement the remaining parts of [Fisheye API](https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html) and [Crucible/Fisheye Common API](https://docs.atlassian.com/fisheye-crucible/latest/wadl/fecru.html).
 
 ## Acknowledgements
 
-The underlying REST Client is a [Typed REST Client](https://github.com/Microsoft/typed-rest-client).
+This package uses [Microsoft Typed REST Client](https://github.com/Microsoft/typed-rest-client) as underlying REST Client.
 
 ## Contributors
 

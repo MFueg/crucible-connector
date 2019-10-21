@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import 'mocha';
-// import { ApiCrucible } from '../api';
 import * as mock from 'mockttp';
+// import { Connector } from '../connector';
 
 describe('Hello function', () => {
   const mockServer = mock.getLocal();
-  // const api = new ApiCrucible("https://localhost:443", "admin", "admin", false);
+  // const connector = new Connector('https://localhost:443', 'admin', 'admin', false);
 
   beforeEach(() => mockServer.start());
   afterEach(() => mockServer.stop());
@@ -15,7 +15,7 @@ describe('Hello function', () => {
     /*
     const endpointMock = await mockServer.get("/mocked-endpoint").thenReply(200, "hmm?");
 
-    const result = await api.searchRepositories({ types: ["git"] });
+    const result = await connector.crucible.searchRepositories({ types: ["git"] });
     expect(result).not.undefined;
 
     const requests = await endpointMock.getSeenRequests();

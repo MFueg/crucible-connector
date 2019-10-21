@@ -2,9 +2,9 @@ import { RestClient } from 'typed-rest-client';
 import * as trc from 'typed-rest-client/Interfaces';
 import { HttpCodes, HttpClient } from 'typed-rest-client/HttpClient';
 import * as fs from 'fs';
-import { Error } from '../interfaces/crucible/Error';
+import { Error } from '../crucible/interfaces/Error';
 
-const tempfile = require('tempfile');
+import tempfile = require('tempfile');
 
 export interface IRequestOptions extends trc.IRequestOptions {}
 
