@@ -1,53 +1,53 @@
 {
-	"name": "crucible-connector",
-	"description": "REST API Implementation for Atlassian Crucible",
-	"author": {
-		"name": "Matthias Füg",
-		"email": "matthias.fueg@dampsoft.de"
-	},
-	"version": "0.0.5",
-	"license": "MIT",
-	"homepage": "https://github.com/mfueg/crucible-connector",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/MFueg/crucible-connector.git"
-	},
-	"bugs": {
-		"url": "https://github.com/mfueg/crucible-connector/issues",
-		"email": "matthias.fueg@dampsoft.de"
-	},
-	"main": "dist/index.js",
-	"typings": "dist/index.d.ts",
-	"keywords": [
-		"typescript",
-		"codereview",
-		"crucible"
-	],
-	"scripts": {
-		"test": "mocha -r ts-node/register src/**/*.test.ts --reporter spec",
-		"build": "tsc --pretty",
-		"prepublishOnly": "npm run build",
-		"watch": "npm run build -- --watch --diagnostics"
-	},
-	"dependencies": {
-		"@types/node": "^12.11.1",
-		"tempfile": "^3.0.0",
-		"tslib": "^1.10.0",
-		"typed-rest-client": "^1.5.0"
-	},
-	"devDependencies": {
-		"@types/chai": "^4.2.3",
-		"@types/mocha": "^5.2.7",
-		"chai": "^4.2.0",
-		"mocha": "^6.2.2",
-		"mockttp": "^0.19.0",
-		"ts-node": "^8.4.1",
-		"typescript": "^3.6.4"
-	},
-	"contributors": [
-		{
-			"name": "Matthias Füg",
-			"email": "matthias.fueg@dampsoft.de"
-		}
-	]
+  "name": "crucible-connector",
+  "description": "REST API Implementation for Atlassian Crucible",
+  "author": {
+    "name": "Matthias Füg",
+    "email": "matthias.fueg@dampsoft.de"
+  },
+  "version": "0.0.5",
+  "license": "MIT",
+  "homepage": "https://github.com/mfueg/crucible-connector",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MFueg/crucible-connector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mfueg/crucible-connector/issues",
+    "email": "matthias.fueg@dampsoft.de"
+  },
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "keywords": [
+    "typescript",
+    "codereview",
+    "crucible"
+  ],
+  "scripts": {
+    "test": "mocha -r ts-node/register src/**/*.test.ts --reporter spec",
+    "build": "tsc --pretty",
+    "prepublishOnly": "npm run build",
+    "watch": "npm run build -- --watch"
+  },
+  "dependencies": {
+    "@types/node": "^12.11.1",
+    "tempfile": "^3.0.0",
+    "tslib": "^1.10.0",
+    "typed-rest-client": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.3",
+    "@types/mocha": "^5.2.7",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2",
+    "mockttp": "^0.19.0",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.4"
+  },
+  "contributors": [
+    {
+      "name": "Matthias Füg",
+      "email": "matthias.fueg@dampsoft.de"
+    }
+  ]
 }

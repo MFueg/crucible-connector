@@ -1,15 +1,15 @@
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { Error } from '../crucible/interfaces/Error';
-import { RepositoryType } from '../crucible/interfaces/Repository';
-import { IndexingStatus } from './interfaces/Indexing';
-import { PagedRequestOptions, PagedResponse } from './interfaces/PagedResponse';
-import { Project, ProjectUpdate } from './interfaces/Project';
-import { RepositoryAny } from './interfaces/Repository';
-import { ReviewerGroup } from './interfaces/ReviewerGroup';
-import { ServerStatus } from './interfaces/ServerStatus';
-import { UserCreate, UserData, UserName, UserPassword } from './interfaces/User';
-import { UserGroup, UserGroupContent, UserGroupName } from './interfaces/UserGroup';
-import { ParentConnectorReference, SubConnector } from '../util/SubConnector';
+import { Error } from '../crucible/interfaces/error';
+import { RepositoryType } from '../crucible/interfaces/repository';
+import { IndexingStatus } from './interfaces/indexing';
+import { PagedRequestOptions, PagedResponse } from './interfaces/pagedResponse';
+import { Project, ProjectUpdate } from './interfaces/project';
+import { RepositoryAny } from './interfaces/repository';
+import { ReviewerGroup } from './interfaces/reviewerGroup';
+import { ServerStatus } from './interfaces/serverStatus';
+import { UserCreate, UserData, UserName, UserPassword } from './interfaces/user';
+import { UserGroup, UserGroupContent, UserGroupName } from './interfaces/userGroup';
+import { ParentConnectorReference, SubConnector } from '../util/subConnector';
 import { RestUri } from '../util/restUri';
 
 /***********************************************************************************************
@@ -18,7 +18,7 @@ import { RestUri } from '../util/restUri';
  *
  ***********************************************************************************************/
 
-export interface GetProjectsPagedOptionsI extends PagedRequestOptions {
+export interface GetProjectsPagedOptions extends PagedRequestOptions {
   /**
    * project's name part filter
    */
@@ -40,7 +40,7 @@ export interface GetProjectsPagedOptionsI extends PagedRequestOptions {
   readonly permissionSchemeName?: string;
 }
 
-export interface GetRepositoriesPagedOptionsI extends PagedRequestOptions {
+export interface GetRepositoriesPagedOptions extends PagedRequestOptions {
   /**
    * filter repositories by repository type
    */
@@ -662,7 +662,7 @@ export class SubConnectorCommon extends SubConnector {
    *
    * @param options page options.
    */
-  public getProjectsPaged(options: GetProjectsPagedOptionsI): Promise<PagedResponse<Project>> {
+  public getProjectsPaged(options: GetProjectsPagedOptions): Promise<PagedResponse<Project>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
         .addPart('projects')
@@ -1284,7 +1284,7 @@ export class SubConnectorCommon extends SubConnector {
    *
    * @param options page options.
    */
-  public getRepositoriesPaged(options: GetRepositoriesPagedOptionsI): Promise<PagedResponse<RepositoryAny>> {
+  public getRepositoriesPaged(options: GetRepositoriesPagedOptions): Promise<PagedResponse<RepositoryAny>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
         .addPart('repositories')

@@ -3,11 +3,11 @@ import { HttpCodes } from 'typed-rest-client/HttpClient';
 import { IRequestHandler } from 'typed-rest-client/Interfaces';
 import { Authentication } from './crucible/interfaces/Common';
 import { Error } from './crucible/interfaces/Error';
-import { ContentType, ParentConnectorReference } from './util/SubConnector';
+import { ContentType, ParentConnectorReference } from './util/subConnector';
 import { IRequestOptions, RestUri } from './util/restUri';
 import { SubConnectorCommon } from './common/SubConnectorCommon';
-import { SubConnectorFisheye } from './fisheye/SubConnectorFisheye';
-import { SubConnectorCrucible } from './crucible/SubConnectorCrucible';
+import { SubConnectorFisheye } from './fisheye/subConnectorFisheye';
+import { SubConnectorCrucible } from './crucible/subConnectorCrucible';
 
 /**
  * Connector class that provides all available API methods of crucible/fisheye

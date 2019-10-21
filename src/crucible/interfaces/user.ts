@@ -1,4 +1,4 @@
-import { TimeZone } from './Common';
+import { TimeZone } from './common';
 
 export interface User {
 	userName: string;
