@@ -1,4 +1,4 @@
-import { Link, Details } from './common';
+import { Link, Details } from '../../interfaces/common';
 
 export interface Version {
   releaseNumber: string;

@@ -1,5 +1,5 @@
 import { User } from './user';
-import { PermaID } from './common';
+import { PermaID } from '../../interfaces/common';
 import { Comments } from './comment';
 import { Anchor } from './patch';
 

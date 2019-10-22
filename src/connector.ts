@@ -1,13 +1,13 @@
 import { BasicCredentialHandler, PersonalAccessTokenCredentialHandler } from 'typed-rest-client/Handlers';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
 import { IRequestHandler } from 'typed-rest-client/Interfaces';
-import { Authentication } from './crucible/interfaces/Common';
-import { Error } from './crucible/interfaces/Error';
+import { Authentication } from './api/interfaces/common';
+import { Error } from './api/crucible/interfaces/Error';
 import { ContentType, ParentConnectorReference } from './util/subConnector';
 import { IRequestOptions, RestUri } from './util/restUri';
-import { SubConnectorCommon } from './common/SubConnectorCommon';
-import { SubConnectorFisheye } from './fisheye/subConnectorFisheye';
-import { SubConnectorCrucible } from './crucible/subConnectorCrucible';
+import { SubConnectorCommon } from './api/common/SubConnectorCommon';
+import { SubConnectorFisheye } from './api/fisheye/subConnectorFisheye';
+import { SubConnectorCrucible } from './api/crucible/subConnectorCrucible';
 
 /**
  * Connector class that provides all available API methods of crucible/fisheye

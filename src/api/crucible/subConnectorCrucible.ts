@@ -2,7 +2,7 @@ import { normalize } from 'path';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
 import { AddChangeSet, Change, Listing } from './interfaces/changeSet';
 import { Comment, Comments, GeneralComment } from './interfaces/comment';
-import { VersionInfo } from './interfaces/common';
+import { VersionInfo } from '../interfaces/common';
 import { Error, ReviewError } from './interfaces/error';
 import { History } from './interfaces/history';
 import { Patch, PatchGroups } from './interfaces/patch';
@@ -24,8 +24,8 @@ import { ReviewMetrics } from './interfaces/reviewMetric';
 import { ReviewRevisions } from './interfaces/reviewRevision';
 import { User, UserProfile } from './interfaces/user';
 import { VersionedEntity } from './interfaces/version';
-import { SubConnector, ParentConnectorReference } from '../util/subConnector';
-import { RestUri } from '../util/restUri';
+import { SubConnector, ParentConnectorReference } from '../../util/subConnector';
+import { RestUri } from '../../util/restUri';
 
 /***********************************************************************************************
  *
@@ -332,7 +332,7 @@ export class SubConnectorCrucible extends SubConnector {
         .setArg('name', options.name)
         .setArg('enabled', options.enabled)
         .setArg('available', options.available)
-        .setArgs('type', options.types, 'repeat')
+        .setArgsFromArray('type', options.types, 'repeat')
         .setArg('limit', options.limit)
         .get<Repositories | Error>('search-repositories', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
@@ -599,7 +599,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviews(states: ReviewState[]): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .setArgs('state', states, 'join')
+        .setArgsFromArray('state', states, 'join')
         .get<Reviews>('get-reviews', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -859,7 +859,7 @@ export class SubConnectorCrucible extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addPart('details')
-        .setArgs('state', states, 'join') // TODO: Check
+        .setArgsFromArray('state', states, 'join') // TODO: Check
         .get<Reviews>('get-reviews-detailed', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -952,7 +952,7 @@ export class SubConnectorCrucible extends SubConnector {
         .setArg('author', options.author)
         .setArg('moderator', options.moderator)
         .setArg('creator', options.creator)
-        .setArgs('states', options.states, 'join')
+        .setArgsFromArray('states', options.states, 'join')
         .setArg('reviewer', options.reviewer)
         .setArg('orRoles', options.orRoles)
         .setArg('complete', options.complete)
@@ -1831,7 +1831,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addPart('reviewitems')
         .addPart(reviewItemId)
         .addPart('revisions')
-        .setArgs('rev', revisions, 'join') // TODO: check
+        .setArgsFromArray('rev', revisions, 'join') // TODO: check
         .create<ReviewItem | Error>(
           'add-revisions-to-review-item',
           undefined,
@@ -1875,7 +1875,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addPart('reviewitems')
         .addPart(reviewItemId)
         .addPart('revisions')
-        .setArgs('rev', revisions, 'join') // TODO: Check
+        .setArgsFromArray('rev', revisions, 'join') // TODO: Check
         .del<ReviewItem | Error>(
           'delete-revisions-from-review-item',
           this.host,

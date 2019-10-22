@@ -6,10 +6,10 @@ import { Error } from '../crucible/interfaces/Error';
 
 import tempfile = require('tempfile');
 
-export interface IRequestOptions extends trc.IRequestOptions {}
+export interface IRequestOptions extends trc.IRequestOptions { }
 
 export class Response<T> {
-  public constructor(public readonly statusCode: number, public readonly result: T | null) {}
+  public constructor(public readonly statusCode: number, public readonly result: T | null) { }
 
   public get<U = T>(code?: HttpCodes): U | undefined {
     if (!code || code != this.statusCode) {
@@ -45,11 +45,20 @@ export class RestUri {
     }
   }
 
-  public setArgs(key: string, values: any[] | undefined, type: 'join' | 'repeat' = 'join') {
+  public setArgsFromArray(key: string, values: any[] | undefined, type: 'join' | 'repeat' = 'join') {
     if (values != undefined && values.length > 0) {
       const strValues = values.map((v) => String(v));
       const newValues: string[] = type == 'join' ? [strValues.join(',')] : strValues;
       this.args.set(key, (this.args.get(key) || []).concat(newValues));
+    }
+    return this;
+  }
+
+  public setArgsFromObject(values: object | undefined) {
+    if (values != undefined) {
+      Object.entries(values).forEach((v) => {
+        this.setArg(v[0], v[1]);
+      });
     }
     return this;
   }

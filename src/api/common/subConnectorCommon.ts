@@ -9,8 +9,8 @@ import { ReviewerGroup } from './interfaces/reviewerGroup';
 import { ServerStatus } from './interfaces/serverStatus';
 import { UserCreate, UserData, UserName, UserPassword } from './interfaces/user';
 import { UserGroup, UserGroupContent, UserGroupName } from './interfaces/userGroup';
-import { ParentConnectorReference, SubConnector } from '../util/subConnector';
-import { RestUri } from '../util/restUri';
+import { ParentConnectorReference, SubConnector } from '../../util/subConnector';
+import { RestUri } from '../../util/restUri';
 
 /***********************************************************************************************
  *
@@ -1239,7 +1239,8 @@ export class SubConnectorCommon extends SubConnector {
   //   });
   // }
 
-  /* TODO: Some methods skipped - might be implemented later
+  /**
+   * TODO: Some methods skipped - might be implemented later
    *
    * - /rest-service-fecru/recently-visited-v1
    *
