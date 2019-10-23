@@ -1,23 +1,28 @@
 import { PermaID } from '../../interfaces/common';
 
 export interface ChangeSetResponse {
-  changesets: Changesets;
+  changesets: ChangeSets;
 }
 
-export interface Changesets {
-  changeset: Changeset[];
+export interface ChangeSets {
+  changeset: ChangeSet[];
 }
 
-export interface Changeset {
+export interface ChangeSet {
   repositoryName: string;
   csid: string;
+  displayId?: string;
+  position?: string;
+  parents?: string[];
+  children?: string[];
   date: number;
   author: string;
-  branch: string;
+  branches?: string[];
+  tags?: string[];
   comment: string;
   p4JobIds: string[];
-  revisions: Revisions;
-  reviews: Reviews;
+  branch: string;
+  fileRevisionKey?: FileRevisionKey[];
 }
 
 export interface Reviews {
@@ -48,4 +53,14 @@ export interface Revision {
   contentLink: string;
   ancestor: string[];
   fileRevisionState: string;
+}
+
+export interface ChangeSetIdS {
+  resultsTruncated: boolean;
+  csid: string[];
+}
+
+export interface FileRevisionKey {
+  path: string;
+  rev: string;
 }

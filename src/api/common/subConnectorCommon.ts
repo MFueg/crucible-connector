@@ -95,8 +95,8 @@ export class SubConnectorCommon extends SubConnector {
   public getRepositoryIndexingStatus(repositoryId: string): Promise<IndexingStatus> {
     return new Promise((resolve, reject) => {
       this.uriIndexing
-        .addPart('status')
-        .addPart(repositoryId)
+        .addSegment('status')
+        .addSegment(repositoryId)
         .get<IndexingStatus | Error>(
           'get-repository-indexing-status',
           this.host,
@@ -189,7 +189,7 @@ export class SubConnectorCommon extends SubConnector {
   public createUserGroup(group: UserGroup): Promise<UserGroup> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('groups')
+        .addSegment('groups')
         .create<UserGroup | Error>(
           'create-user-group',
           group,
@@ -222,10 +222,9 @@ export class SubConnectorCommon extends SubConnector {
   public getUserGroupsPaged(prefix: string, options: PagedRequestOptions): Promise<PagedResponse<UserGroup>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('groups')
-        .setArg('prefix', prefix)
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
+        .addSegment('groups')
+        .setParameter({ 'prefix': prefix })
+        .setParameter(options)
         .get<PagedResponse<UserGroup> | Error>(
           'get-paged-user-groups',
           this.host,
@@ -256,8 +255,8 @@ export class SubConnectorCommon extends SubConnector {
   public getUserGroup(groupName: string): Promise<UserGroup> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('groups')
-        .addPart(groupName)
+        .addSegment('groups')
+        .addSegment(groupName)
         .get<UserGroup | Error>('get-user-group', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<UserGroup>(HttpCodes.OK);
@@ -284,8 +283,8 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       const content: UserGroupContent = { admin: group.admin };
       this.uriAdmin
-        .addPart('groups')
-        .addPart(group.name)
+        .addSegment('groups')
+        .addSegment(group.name)
         .replace<UserGroupContent | Error>(
           'update-user-group',
           content, // only the admin field allowed
@@ -317,8 +316,8 @@ export class SubConnectorCommon extends SubConnector {
   public deleteUserGroup(groupName: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('groups')
-        .addPart(groupName)
+        .addSegment('groups')
+        .addSegment(groupName)
         .del<void | Error>('delete-user-group', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == 204) {
@@ -344,11 +343,10 @@ export class SubConnectorCommon extends SubConnector {
   public getUsersOfUserGroupPaged(groupName: string, options: PagedRequestOptions): Promise<PagedResponse<UserName>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('groups')
-        .addPart(groupName)
-        .addPart('users')
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
+        .addSegment('groups')
+        .addSegment(groupName)
+        .addSegment('users')
+        .setParameter(options)
         .get<PagedResponse<UserName> | Error>(
           'get-paged-users-of-user-group',
           this.host,
@@ -381,8 +379,8 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       const user: UserName = { name: userName };
       this.uriAdmin
-        .addPart('groups')
-        .addPart(groupName)
+        .addSegment('groups')
+        .addSegment(groupName)
         .replace<void | Error>(
           'add-user-to-user-group',
           user,
@@ -416,8 +414,8 @@ export class SubConnectorCommon extends SubConnector {
   //   return new Promise((resolve, reject) => {
   //     const user: UserName = { name: userName };
   //     this.uriAdmin
-  //       .addPart('groups')
-  //       .addPart(groupName)
+  //       .addSegment('groups')
+  //       .addSegment(groupName)
   //       .del<void | Error>('delete-user-from-user-group', user,
   //        this.host,
   //        this.getAuthHandlers(),
@@ -445,7 +443,7 @@ export class SubConnectorCommon extends SubConnector {
   public createUser(user: UserCreate): Promise<UserData> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('users')
+        .addSegment('users')
         .create<UserGroup | Error>('create-user', user, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<UserData>(201);
@@ -471,9 +469,8 @@ export class SubConnectorCommon extends SubConnector {
   public getUsersPaged(options: PagedRequestOptions): Promise<PagedResponse<UserData>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('users')
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
+        .addSegment('users')
+        .setParameter(options)
         .get<PagedResponse<UserGroup> | Error>(
           'get-paged-users',
           this.host,
@@ -504,8 +501,8 @@ export class SubConnectorCommon extends SubConnector {
   public getUser(userName: string): Promise<UserData> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('users')
-        .addPart(userName)
+        .addSegment('users')
+        .addSegment(userName)
         .get<UserData | Error>('get-user-data', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<UserData>(HttpCodes.OK);
@@ -533,8 +530,8 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       const user: UserPassword = { password: password };
       this.uriAdmin
-        .addPart('users')
-        .addPart(userName)
+        .addSegment('users')
+        .addSegment(userName)
         .replace<UserData | Error>(
           'update-user-data',
           user,
@@ -566,8 +563,8 @@ export class SubConnectorCommon extends SubConnector {
   public removeUser(userName: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('users')
-        .addPart(userName)
+        .addSegment('users')
+        .addSegment(userName)
         .del<void | Error>('delete-user', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == 204) {
@@ -596,11 +593,10 @@ export class SubConnectorCommon extends SubConnector {
   ): Promise<PagedResponse<UserGroupName>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('users')
-        .addPart(userName)
-        .addPart('groups')
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
+        .addSegment('users')
+        .addSegment(userName)
+        .addSegment('groups')
+        .setParameter(options)
         .get<PagedResponse<UserGroupName> | Error>(
           'get-paged-users-of-user-group',
           this.host,
@@ -633,7 +629,7 @@ export class SubConnectorCommon extends SubConnector {
   public createProject(project: Project): Promise<Project> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
+        .addSegment('projects')
         .create<Project | Error>(
           'create-project',
           project,
@@ -665,13 +661,8 @@ export class SubConnectorCommon extends SubConnector {
   public getProjectsPaged(options: GetProjectsPagedOptions): Promise<PagedResponse<Project>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .setArg('name', options.name)
-        .setArg('key', options.key)
-        .setArg('defaultRepositoryName', options.defaultRepositoryName)
-        .setArg('permissionSchemeName', options.permissionSchemeName)
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
+        .addSegment('projects')
+        .setParameter(options)
         .get<PagedResponse<Project> | Error>(
           'get-paged-projects',
           this.host,
@@ -702,8 +693,8 @@ export class SubConnectorCommon extends SubConnector {
   public getProject(projectKey: string): Promise<Project> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
+        .addSegment('projects')
+        .addSegment(projectKey)
         .get<Project | Error>('get-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Project>(HttpCodes.OK);
@@ -730,8 +721,8 @@ export class SubConnectorCommon extends SubConnector {
   public updateProject(projectKey: string, project: ProjectUpdate): Promise<Project> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
+        .addSegment('projects')
+        .addSegment(projectKey)
         .replace<Project | Error>(
           'update-project',
           project,
@@ -765,9 +756,9 @@ export class SubConnectorCommon extends SubConnector {
   public deleteProject(projectKey: string, deleteProjectReviews?: boolean): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .setArg('deleteProjectReviews', deleteProjectReviews)
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .setParameter({ 'deleteProjectReviews': deleteProjectReviews })
         .del<void | Error>('delete-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == 204) {
@@ -793,10 +784,10 @@ export class SubConnectorCommon extends SubConnector {
   public moveProjectContent(projectKeyFrom: string, projectKeyTo: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKeyFrom)
-        .addPart('move-reviews')
-        .addPart(projectKeyTo)
+        .addSegment('projects')
+        .addSegment(projectKeyFrom)
+        .addSegment('move-reviews')
+        .addSegment(projectKeyTo)
         .replace<void | Error>(
           'move-project-content',
           undefined,
@@ -831,11 +822,10 @@ export class SubConnectorCommon extends SubConnector {
   ): Promise<PagedResponse<UserName>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('default-reviewer-users')
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .addSegment('default-reviewer-users')
+        .setParameter(options)
         .get<PagedResponse<UserName> | Error>(
           'get-paged-default-reviewer-users-of-project',
           this.host,
@@ -868,9 +858,9 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       const user: UserName = { name: userName };
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('default-reviewer-users')
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .addSegment('default-reviewer-users')
         .replace<void | Error>(
           'add-default-reviewer-users-to-project',
           user,
@@ -904,9 +894,9 @@ export class SubConnectorCommon extends SubConnector {
   //   return new Promise((resolve, reject) => {
   //     const user: UserName = { name: userName };
   //     this.uriAdmin
-  //       .addPart('projects')
-  //       .addPart(projectKey)
-  //       .addPart('default-reviewer-users')
+  //       .addSegment('projects')
+  //       .addSegment(projectKey)
+  //       .addSegment('default-reviewer-users')
   //       .del<void | Error>('delete-default-reviewer-users-from-project', user, this.host, this.getAuthHandlers(),
   //                          this.cerateQueryOptions())
   //       .then((r) => {
@@ -936,11 +926,10 @@ export class SubConnectorCommon extends SubConnector {
   ): Promise<PagedResponse<ReviewerGroup>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('default-reviewer-groups')
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .addSegment('default-reviewer-groups')
+        .setParameter(options)
         .get<PagedResponse<ReviewerGroup> | Error>(
           'get-paged-default-reviewer-groups-of-project',
           this.host,
@@ -973,9 +962,9 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       const group: ReviewerGroup = { name: groupName };
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('default-reviewer-groups')
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .addSegment('default-reviewer-groups')
         .replace<void | Error>(
           'add-default-reviewer-group-to-project',
           group,
@@ -1009,9 +998,9 @@ export class SubConnectorCommon extends SubConnector {
   //   return new Promise((resolve, reject) => {
   //     const group: ReviewerGroup = { name: groupName };
   //     this.uriAdmin
-  //       .addPart('projects')
-  //       .addPart(projectKey)
-  //       .addPart('default-reviewer-groups')
+  //       .addSegment('projects')
+  //       .addSegment(projectKey)
+  //       .addSegment('default-reviewer-groups')
   //       .del<void | Error>('delete-reviewer-group-from-project', group, this.host, this.getAuthHandlers(),
   //                          this.cerateQueryOptions())
   //       .then((r) => {
@@ -1041,55 +1030,54 @@ export class SubConnectorCommon extends SubConnector {
   ): Promise<PagedResponse<UserName>> {
     return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('allowed-reviewer-users')
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
-        .get<PagedResponse<UserName> | Error>(
-          'get-paged-allowed-reviewer-users-of-project',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
-        )
-        .then((r) => {
-          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
-          if (result) {
-            resolve(result);
-          } else {
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .addSegment('allowed-reviewer-users')
+        .setParameter(options)
+        .get < PagedResponse<UserName> | Error>(
+        'get-paged-allowed-reviewer-users-of-project',
+      this.host,
+        this.getAuthHandlers(),
+      this.cerateQueryOptions()
+    )
+      .then((r) => {
+        let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+        if (result) {
+          resolve(result);
+        } else {
             reject(r.getError());
-          }
-        })
-        .catch((e) => {
-          reject(e);
-        });
-    });
-  }
-
-  /**
-   * Add user to project's allowed reviewer users list.
+        }
+      })
+      .catch((e) => {
+        reject(e);
+      });
+  });
+}
+ 
+/**        
+  * Add user to project's allowed reviewer users list.
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
-   *
-   * @param projectKey project key
+      *
+      * @param projectKey project key
    * @param userName User to add
-   */
+   * /
   public addAllowedReviewerUserToProject(projectKey: string, userName: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const user: UserName = { name: userName };
-      this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('allowed-reviewer-users')
+    const user: UserName = { name: userName };
+    this.uriAdmin
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .addSegment('allowed-reviewer-users')
         .replace<void | Error>(
-          'add-default-reviewer-group-to-project',
-          user,
-          this.host,
-          this.getAuthHandlers(),
+  'add-default-reviewer-group-to-project',
+user,
+  this.host,
+this.getAuthHandlers(),
           this.cerateQueryOptions()
-        )
+        )    
         .then((r) => {
-          if (r.statusCode == 204 || r.statusCode == 304) {
+  if (r.statusCode == 204 || r.statusCode == 304) {
             resolve();
           } else {
             reject(r.getError());
@@ -1114,9 +1102,9 @@ export class SubConnectorCommon extends SubConnector {
   //   return new Promise((resolve, reject) => {
   //     const user: UserName = { name: userName };
   //     this.uriAdmin
-  //       .addPart('projects')
-  //       .addPart(projectKey)
-  //       .addPart('allowed-reviewer-users')
+  //       .addSegment('projects')
+  //       .addSegment(projectKey)
+  //       .addSegment('allowed-reviewer-users')
   //       .del<void | Error>('delete-reviewer-group-from-project', user, this.host, this.getAuthHandlers(),
   //                          this.cerateQueryOptions())
   //       .then((r) => {
@@ -1133,68 +1121,67 @@ export class SubConnectorCommon extends SubConnector {
   // }
 
   /**
-   * Retrieves project's allowed reviewer groups.
-   *
-   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
-   *
+   *  Retrieves project's allowed reviewer groups.
+   * 
+ * https:/ / docs.atlassia n .com/fisheye- crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+  *
    * @param projectKey project key
    * @param options page options.
-   */
-  public getProjectAllowedReviewerGroupsPaged(
+   * /
+    public getProjectAllowedReviewerGroupsPaged(
     projectKey: string,
     options: PagedRequestOptions
-  ): Promise<PagedResponse<ReviewerGroup>> {
-    return new Promise((resolve, reject) => {
+    ): Promise<PagedResponse<ReviewerGroup>> {
+      return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('allowed-reviewer-groups')
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
-        .get<PagedResponse<ReviewerGroup> | Error>(
-          'get-paged-allowed-reviewer-groups-of-project',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+        .addSegment('projects')
+        .addSegment(projectKey)
+    .addSegment('allowed-reviewer-groups')
+        .setParameter(options)
+        .get < PagedResponse<ReviewerGroup> | Error>(
+  'get-paged-allowed-reviewer-groups-of-project',
+this.host,
+  this.getAuthHandlers(),
+this.cerateQueryOptions()
         )
-        .then((r) => {
-          let result = r.get<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
-          if (result) {
+        .then( (r) => {
+  let result = r.get<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
+  if (result) {
             resolve(result);
           } else {
             reject(r.getError());
-          }
-        })
-        .catch((e) => {
-          reject(e);
-        });
-    });
-  }
-
-  /**
-   * Add group to project's allowed reviewer group list.
+        }
+      })
+      .catch((e) => {
+        reject(e);
+      });
+  });
+}
+ 
+/**        
+  * Add group to project's allowed reviewer group list.
    *
    * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
-   *
-   * @param projectKey project key
+      *
+      * @param projectKey project key
    * @param groupName Group to add
-   */
+   * /
   public addAllowedReviewerGroupToProject(projectKey: string, groupName: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const group: ReviewerGroup = { name: groupName };
-      this.uriAdmin
-        .addPart('projects')
-        .addPart(projectKey)
-        .addPart('allowed-reviewer-groups')
+    const group: ReviewerGroup = { name: groupName };
+    this.uriAdmin
+        .addSegment('projects')
+        .addSegment(projectKey)
+        .addSegment('allowed-reviewer-groups')
         .replace<void | Error>(
-          'add-allowed-reviewer-group-to-project',
-          group,
-          this.host,
-          this.getAuthHandlers(),
+  'add-allowed-reviewer-group-to-project',
+group,
+  this.host,
+this.getAuthHandlers(),
           this.cerateQueryOptions()
-        )
+        )    
         .then((r) => {
-          if (r.statusCode == 204 || r.statusCode == 304) {
+  if (r.statusCode == 204 || r.statusCode == 304) {
             resolve();
           } else {
             reject(r.getError());
@@ -1219,9 +1206,9 @@ export class SubConnectorCommon extends SubConnector {
   //   return new Promise((resolve, reject) => {
   //     const group: ReviewerGroup = { name: groupName };
   //     this.uriAdmin
-  //       .addPart('projects')
-  //       .addPart(projectKey)
-  //       .addPart('allowed-reviewer-groups')
+  //       .addSegment('projects')
+  //       .addSegment(projectKey)
+  //       .addSegment('allowed-reviewer-groups')
   //       .del<void | Error>('delete-allowed-reviewer-group-from-project', group,
   //        this.host,
   //        this.getAuthHandlers(),
@@ -1245,7 +1232,7 @@ export class SubConnectorCommon extends SubConnector {
    * - /rest-service-fecru/recently-visited-v1
    *
    */
-
+            
   /**
    * Creates a repository.
    *
@@ -1254,19 +1241,19 @@ export class SubConnectorCommon extends SubConnector {
    * @param repository New project to create.
    */
   public createRepository(repository: RepositoryAny): Promise<RepositoryAny> {
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
       this.uriAdmin
-        .addPart('repositories')
+        .addSegment('repositories')
         .create<RepositoryAny | Error>(
-          'create-repository',
-          repository,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
-        )
-        .then((r) => {
-          let result = r.get<RepositoryAny>(201);
-          if (result) {
+  'create-repository',
+    repository,
+  this.host,
+    this.getAuthHandlers(),
+  this.cerateQueryOptions()
+)
+        .then( (r) => {
+  let result = r.get<RepositoryAny>(201);
+  if (result) {
             resolve(result);
           } else {
             reject(r.getError());
@@ -1277,7 +1264,7 @@ export class SubConnectorCommon extends SubConnector {
         });
     });
   }
-
+                    
   /**
    * Retrieve a page of repositories. Repository properties with default values may not be returned.
    *
@@ -1287,22 +1274,18 @@ export class SubConnectorCommon extends SubConnector {
    */
   public getRepositoriesPaged(options: GetRepositoriesPagedOptions): Promise<PagedResponse<RepositoryAny>> {
     return new Promise((resolve, reject) => {
-      this.uriAdmin
-        .addPart('repositories')
-        .setArg('type', options.type)
-        .setArg('enabled', options.enabled)
-        .setArg('started', options.started)
-        .setArg('start', options.start)
-        .setArg('limit', options.limit)
-        .get<PagedResponse<RepositoryAny> | Error>(
-          'get-paged-repositories',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
-        )
-        .then((r) => {
-          let result = r.get<PagedResponse<RepositoryAny>>(HttpCodes.OK);
-          if (result) {
+  this.uriAdmin
+        .addSegment('repositories')
+        .setParameter(options)    
+        .get < PagedResponse<RepositoryAny> | Error>(
+    'get-paged-repositories',
+  this.host,
+    this.getAuthHandlers(),
+  this.cerateQueryOptions()
+)
+        .then( (r) => {
+  let result = r.get<PagedResponse<RepositoryAny>>(HttpCodes.OK);
+  if (result) {
             resolve(result);
           } else {
             reject(r.getError());

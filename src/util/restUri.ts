@@ -2,7 +2,7 @@ import { RestClient } from 'typed-rest-client';
 import * as trc from 'typed-rest-client/Interfaces';
 import { HttpCodes, HttpClient } from 'typed-rest-client/HttpClient';
 import * as fs from 'fs';
-import { Error } from '../crucible/interfaces/Error';
+import { Error } from '../api/crucible/interfaces/Error';
 
 import tempfile = require('tempfile');
 
@@ -35,17 +35,57 @@ export class Response<T> {
   }
 }
 
+export interface ParameterOptionsDefault {
+  readonly key: string;
+  readonly value: any | undefined;
+}
+
+export interface ParameterOptionsArray {
+  readonly key: string;
+  readonly values: any[] | undefined;
+  readonly type?: 'join' | 'repeat';
+}
+
+export interface ParameterOptionsObject {
+  [key: string]: any;
+}
+
+export type ParameterOptions = ParameterOptionsDefault | ParameterOptionsArray | ParameterOptionsObject;
+
+function isParameterOptionsDefault(options: ParameterOptions): options is ParameterOptionsDefault {
+  let opts = (options as ParameterOptionsDefault);
+  return opts.value !== undefined && opts.key !== undefined;
+}
+function isParameterOptionsArray(options: ParameterOptions): options is ParameterOptionsArray {
+  let opts = (options as ParameterOptionsArray);
+  return opts.values !== undefined && opts.key !== undefined;
+}
+function isParameterOptionsObject(options: ParameterOptions): options is ParameterOptionsObject {
+  return !isParameterOptionsArray(options) && !isParameterOptionsDefault(options);
+}
+
 export class RestUri {
-  public readonly parts = new Array<string>();
+  public readonly segments = new Array<string>();
   public readonly args = new Map<string, string[]>();
 
-  public constructor(private base: string, ...parts: string[]) {
-    for (var i = 0; i < parts.length; i++) {
-      this.parts.push(parts[i]);
+  public constructor(private base: string, ...segments: string[]) {
+    for (var i = 0; i < segments.length; i++) {
+      this.segments.push(segments[i]);
     }
   }
 
-  public setArgsFromArray(key: string, values: any[] | undefined, type: 'join' | 'repeat' = 'join') {
+  public setParameter(options: ParameterOptions) {
+    if (isParameterOptionsDefault(options)) {
+      this.setParam(options.key, options.value);
+    } else if (isParameterOptionsArray(options)) {
+      this.setParamsFromArray(options.key, options.values, options.type);
+    } else if (isParameterOptionsObject(options)) {
+      this.setParamsFromObject(options);
+    }
+    return this;
+  }
+
+  private setParamsFromArray(key: string, values: any[] | undefined, type: 'join' | 'repeat' = 'join') {
     if (values != undefined && values.length > 0) {
       const strValues = values.map((v) => String(v));
       const newValues: string[] = type == 'join' ? [strValues.join(',')] : strValues;
@@ -54,31 +94,31 @@ export class RestUri {
     return this;
   }
 
-  public setArgsFromObject(values: object | undefined) {
+  public setParamsFromObject(values: object | undefined) {
     if (values != undefined) {
       Object.entries(values).forEach((v) => {
-        this.setArg(v[0], v[1]);
+        this.setParam(v[0], v[1]);
       });
     }
     return this;
   }
 
-  public setArg(key: string, value: any | undefined) {
+  private setParam(key: string, value: any | undefined) {
     if (value != undefined) {
       this.args.set(key, (this.args.get(key) || []).concat(String(value)));
     }
     return this;
   }
 
-  public addPart(part: string) {
-    this.parts.push(part);
+  public addSegment(segment: string) {
+    this.segments.push(segment);
     return this;
   }
 
   public str(): string {
-    let parts = this.parts.map((p) => encodeURI(p));
-    parts.unshift(this.base);
-    let url = parts.join('/');
+    let segments = this.segments.map((p) => encodeURI(p));
+    segments.unshift(this.base);
+    let url = segments.join('/');
     let urlParams = new Array<string>();
     this.args.forEach((vs, k) => {
       vs.forEach((v) => {

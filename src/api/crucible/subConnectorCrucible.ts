@@ -175,7 +175,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getUsers(usernameFilter: string[] = []): Promise<User[]> {
     return new Promise((resolve, reject) => {
       this.uriUsers
-        .setArg('username', usernameFilter)
+        .setParameter({ "username": usernameFilter })
         .get<User[] | Error>('get-users', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let users = r.get<User[]>(HttpCodes.OK);
@@ -202,8 +202,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getUserCommitter(repository: string, username: string): Promise<User> {
     return new Promise((resolve, reject) => {
       this.uriUsers
-        .addPart(repository)
-        .addPart(username)
+        .addSegment(repository)
+        .addSegment(username)
         .get<User>('get-user-committer', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let user = r.get<User>(HttpCodes.OK);
@@ -229,7 +229,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getUserProfile(username: string): Promise<UserProfile> {
     return new Promise((resolve, reject) => {
       this.uriUsers
-        .addPart(username)
+        .addSegment(username)
         .get<UserProfile>('get-user-profile', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let profile = r.get<UserProfile>(HttpCodes.OK);
@@ -265,8 +265,8 @@ export class SubConnectorCrucible extends SubConnector {
   public searchReview(term: string, maxReturn: number): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriSearch
-        .setArg('term', term)
-        .setArg('maxReturn', maxReturn)
+        .setParameter({ 'term': term })
+        .setParameter({ 'maxReturn': maxReturn })
         .get<Reviews | Error>('search-review', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let reviews = r.get<Reviews>(HttpCodes.OK);
@@ -293,8 +293,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewsForIssue(jiraKey: string, maxReturn: number): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriSearch
-        .setArg('jiraKey', jiraKey)
-        .setArg('maxReturn', maxReturn)
+        .setParameter({ 'jiraKey': jiraKey })
+        .setParameter({ 'maxReturn': maxReturn })
         .get<Reviews | Error>('get-review-for-issue', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let reviews = r.get<Reviews>(HttpCodes.OK);
@@ -329,11 +329,11 @@ export class SubConnectorCrucible extends SubConnector {
   public searchRepositories(options: SearchRepositoriesOptions): Promise<Repositories> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .setArg('name', options.name)
-        .setArg('enabled', options.enabled)
-        .setArg('available', options.available)
-        .setArgsFromArray('type', options.types, 'repeat')
-        .setArg('limit', options.limit)
+        .setParameter({ 'name': options.name })
+        .setParameter({ 'enabled': options.enabled })
+        .setParameter({ 'available': options.available })
+        .setParameter({ key: 'type', values: options.types, type: 'repeat' })
+        .setParameter({ 'limit': options.limit })
         .get<Repositories | Error>('search-repositories', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Repositories>(HttpCodes.OK);
@@ -362,10 +362,10 @@ export class SubConnectorCrucible extends SubConnector {
   public getFileRevisionContent(repository: string, revision: string, path: string): Promise<string> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .addPart('content')
-        .addPart(repository)
-        .addPart(revision)
-        .addPart(path)
+        .addSegment('content')
+        .addSegment(repository)
+        .addSegment(revision)
+        .addSegment(path)
         .loadFile<string>('get-file-revision-content', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<string>(HttpCodes.OK);
@@ -392,9 +392,9 @@ export class SubConnectorCrucible extends SubConnector {
   public getChangeSet(repository: string, revision: string): Promise<Change> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .addPart('change')
-        .addPart(repository)
-        .addPart(revision)
+        .addSegment('change')
+        .addSegment(repository)
+        .addSegment(revision)
         .get<Change>('get-changeset', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Change>(HttpCodes.OK);
@@ -427,15 +427,15 @@ export class SubConnectorCrucible extends SubConnector {
   public searchChangeSets(repository: string, path: string, options: SearchChangeSetsOptions): Promise<Change> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .addPart('changes')
-        .addPart(repository)
-        .addPart(path)
-        .setArg('path', path)
-        .setArg('oldestCsid', options.oldestCsId)
-        .setArg('includeOldest', options.includeOldest)
-        .setArg('newestCsid', options.newestCsId)
-        .setArg('includeNewest', options.includeNewest)
-        .setArg('max', options.max)
+        .addSegment('changes')
+        .addSegment(repository)
+        .addSegment(path)
+        .setParameter({ 'path': path })
+        .setParameter({ 'oldestCsid': options.oldestCsId })
+        .setParameter({ 'includeOldest': options.includeOldest })
+        .setParameter({ 'newestCsid': options.newestCsId })
+        .setParameter({ 'includeNewest': options.includeNewest })
+        .setParameter({ 'max': options.max })
         .get<Change>('search-changesets', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Change>(HttpCodes.OK);
@@ -469,9 +469,9 @@ export class SubConnectorCrucible extends SubConnector {
   public getVersionedEntity(repository: string, revision: string, path: string): Promise<VersionedEntity> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .addPart(repository)
-        .addPart(revision)
-        .addPart(path)
+        .addSegment(repository)
+        .addSegment(revision)
+        .addSegment(path)
         .get<VersionedEntity>('get-versioned-entity', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<VersionedEntity>(HttpCodes.OK);
@@ -501,7 +501,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getRepository(repository: string): Promise<Repository> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .addPart(repository)
+        .addSegment(repository)
         .get<Repository>('get-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Repository>(HttpCodes.OK);
@@ -528,9 +528,9 @@ export class SubConnectorCrucible extends SubConnector {
   public browseRepository(repository: string, path: string): Promise<Listing> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .addPart('browse')
-        .addPart(repository)
-        .addPart(path)
+        .addSegment('browse')
+        .addSegment(repository)
+        .addSegment(path)
         .get<Repository>('browse-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Listing>(HttpCodes.OK);
@@ -559,10 +559,10 @@ export class SubConnectorCrucible extends SubConnector {
   public getVersionedEntityHistory(repository: string, revision: string, path: string): Promise<History> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .addPart('history')
-        .addPart(repository)
-        .addPart(revision)
-        .addPart(path)
+        .addSegment('history')
+        .addSegment(repository)
+        .addSegment(revision)
+        .addSegment(path)
         .get<History>('browse-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<History>(HttpCodes.OK);
@@ -599,7 +599,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviews(states: ReviewState[]): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .setArgsFromArray('state', states, 'join')
+        .setParameter({ key: 'state', values: states, type: 'join' })
         .get<Reviews>('get-reviews', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -639,7 +639,7 @@ export class SubConnectorCrucible extends SubConnector {
   public createReview(review: CreateReview, state: string): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .setArg('state', state)
+        .setParameter({ 'state': state })
         .create<Review | Error>('create-review', review, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Review>(HttpCodes.OK);
@@ -665,8 +665,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewCommentMetric(version: string): Promise<ReviewMetrics> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart('metrics')
-        .addPart(version)
+        .addSegment('metrics')
+        .addSegment(version)
         .get<ReviewMetrics>('get-review-metrics', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<ReviewMetrics>(HttpCodes.OK);
@@ -694,10 +694,10 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewComment(reviewId: string, commentId: string, render?: boolean): Promise<Comment> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
-        .setArg('render', render)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
+        .setParameter({ key: 'render', value: render })
         .get<Comment | Error>('get-review-comment', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comment>(HttpCodes.OK);
@@ -724,9 +724,9 @@ export class SubConnectorCrucible extends SubConnector {
   public deleteReviewComment(reviewId: string, commentId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
         .del<Comment | Error>('delete-review-comment', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -752,9 +752,9 @@ export class SubConnectorCrucible extends SubConnector {
   public updateReviewComment(reviewId: string, commentId: string, comment: GeneralComment): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
         .create<void | Error>(
           'update-review-comment',
           comment,
@@ -799,8 +799,8 @@ export class SubConnectorCrucible extends SubConnector {
   public addFileToReview(reviewId: string, stream: NodeJS.ReadableStream): Promise<ReviewItem> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('addFile')
+        .addSegment(reviewId)
+        .addSegment('addFile')
         .uploadFile<ReviewItem | Error>(
           'upload-file-to-review',
           this.host,
@@ -830,7 +830,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getVersionInfo(): Promise<VersionInfo> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart('versionInfo')
+        .addSegment('versionInfo')
         .get<VersionInfo>('get-version-info', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<VersionInfo>(HttpCodes.OK);
@@ -858,8 +858,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewsDetailed(states: ReviewState[]): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart('details')
-        .setArgsFromArray('state', states, 'join') // TODO: Check
+        .addSegment('details')
+        .setParameter({ key: 'state', values: states, type: 'join' }) // TODO: Check
         .get<Reviews>('get-reviews-detailed', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -886,9 +886,9 @@ export class SubConnectorCrucible extends SubConnector {
   private filterReviewsInternal(detailed: boolean, filter: ReviewFilter): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'filter-reviews-detailed' : 'filter-reviews';
-      let uri = this.uriReviews.addPart('filter').addPart(filter);
+      let uri = this.uriReviews.addSegment('filter').addSegment(filter);
       if (detailed) {
-        uri.addPart('details');
+        uri.addSegment('details');
       }
       uri
         .get<Reviews>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
@@ -943,23 +943,23 @@ export class SubConnectorCrucible extends SubConnector {
   private searchReviewsInternal(detailed: boolean, options: SearchReviewsOptions): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'search-reviews-detailed' : 'search-reviews';
-      let uri = this.uriReviews.addPart('filter');
+      let uri = this.uriReviews.addSegment('filter');
       if (detailed) {
-        uri.addPart('details');
+        uri.addSegment('details');
       }
       uri
-        .setArg('title', options.title)
-        .setArg('author', options.author)
-        .setArg('moderator', options.moderator)
-        .setArg('creator', options.creator)
-        .setArgsFromArray('states', options.states, 'join')
-        .setArg('reviewer', options.reviewer)
-        .setArg('orRoles', options.orRoles)
-        .setArg('complete', options.complete)
-        .setArg('allReviewersComplete', options.allReviewersComplete)
-        .setArg('project', options.project)
-        .setArg('fromDate', options.fromDate ? options.fromDate.getMilliseconds() : undefined)
-        .setArg('toDate', options.toDate ? options.toDate.getMilliseconds() : undefined)
+        .setParameter({ 'title': options.title })
+        .setParameter({ 'author': options.author })
+        .setParameter({ 'moderator': options.moderator })
+        .setParameter({ 'creator': options.creator })
+        .setParameter({ key: 'states', values: options.states, type: 'join' })
+        .setParameter({ 'reviewer': options.reviewer })
+        .setParameter({ 'orRoles': options.orRoles })
+        .setParameter({ 'complete': options.complete })
+        .setParameter({ 'allReviewersComplete': options.allReviewersComplete })
+        .setParameter({ 'project': options.project })
+        .setParameter({ 'fromDate': options.fromDate ? options.fromDate.getMilliseconds() : undefined })
+        .setParameter({ 'toDate': options.toDate ? options.toDate.getMilliseconds() : undefined })
         .get<Reviews>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -1014,11 +1014,11 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewCommentReplies(reviewId: string, commentId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
-        .addPart('replies')
-        .setArg('render', render)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
+        .addSegment('replies')
+        .setParameter({ key: 'render', value: render })
         .get<Comments | Error>('get-comment-replies', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
@@ -1047,10 +1047,10 @@ export class SubConnectorCrucible extends SubConnector {
   public addReviewCommentReply(reviewId: string, commentId: string, reply: GeneralComment): Promise<Comment> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
-        .addPart('replies')
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
+        .addSegment('replies')
         .create<Comment | Error>(
           'add-comment-reply',
           reply,
@@ -1082,9 +1082,9 @@ export class SubConnectorCrucible extends SubConnector {
   public markAllReviewCommentsAsRead(reviewId: string): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart('markAllAsRead')
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment('markAllAsRead')
         .create<Review | Error>(
           'mark-all-review-comments-as-read',
           undefined,
@@ -1117,10 +1117,10 @@ export class SubConnectorCrucible extends SubConnector {
   public markReviewCommentAsRead(reviewId: string, commentId: string): Promise<Comment> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
-        .addPart('markAsRead')
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
+        .addSegment('markAsRead')
         .create<Comment | Error>(
           'mark-review-comment-as-read',
           undefined,
@@ -1153,10 +1153,10 @@ export class SubConnectorCrucible extends SubConnector {
   public markReviewCommentAsLeaveUnread(reviewId: string, commentId: string): Promise<Comment> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
-        .addPart('markAsLeaveUnread')
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
+        .addSegment('markAsLeaveUnread')
         .create<Comment | Error>(
           'mark-review-comment-as-leave-unread',
           undefined,
@@ -1196,11 +1196,11 @@ export class SubConnectorCrucible extends SubConnector {
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
-        .addPart('replies')
-        .addPart(replyId)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
+        .addSegment('replies')
+        .addSegment(replyId)
         .create<void | Error>(
           'update-review-comment-reply',
           reply,
@@ -1233,11 +1233,11 @@ export class SubConnectorCrucible extends SubConnector {
   public deleteReviewCommentReply(reviewId: string, commentId: string, replyId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart(commentId)
-        .addPart('replies')
-        .addPart(replyId)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment(commentId)
+        .addSegment('replies')
+        .addSegment(replyId)
         .del<void | Error>('delete-review-comment-reply', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1262,8 +1262,8 @@ export class SubConnectorCrucible extends SubConnector {
   public publishAllDraftReviewComments(reviewId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('publish')
+        .addSegment(reviewId)
+        .addSegment('publish')
         .create<void | Error>(
           'publish-draft-review-comments',
           undefined,
@@ -1295,9 +1295,9 @@ export class SubConnectorCrucible extends SubConnector {
   public publishDraftReviewComment(reviewId: string, commentId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('publish')
-        .addPart(commentId)
+        .addSegment(reviewId)
+        .addSegment('publish')
+        .addSegment(commentId)
         .create<void | Error>(
           'publish-draft-review-comment',
           undefined,
@@ -1329,9 +1329,9 @@ export class SubConnectorCrucible extends SubConnector {
   public completeReview(reviewId: string, ignoreWarnings?: boolean): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('complete')
-        .setArg('ignoreWarnings', ignoreWarnings)
+        .addSegment(reviewId)
+        .addSegment('complete')
+        .setParameter({ 'ignoreWarnings': ignoreWarnings })
         .create<void | ReviewError | Error>(
           'complete-review',
           undefined,
@@ -1368,9 +1368,9 @@ export class SubConnectorCrucible extends SubConnector {
   public uncompleteReview(reviewId: string, ignoreWarnings?: boolean): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('uncomplete')
-        .setArg('ignoreWarnings', ignoreWarnings)
+        .addSegment(reviewId)
+        .addSegment('uncomplete')
+        .setParameter({ 'ignoreWarnings': ignoreWarnings })
         .create<void | ReviewError | Error>(
           'complete-review',
           undefined,
@@ -1412,10 +1412,10 @@ export class SubConnectorCrucible extends SubConnector {
   ): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('transition')
-        .setArg('action', transition)
-        .setArg('ignoreWarnings', ignoreWarnings)
+        .addSegment(reviewId)
+        .addSegment('transition')
+        .setParameter({ 'action': transition })
+        .setParameter({ 'ignoreWarnings': ignoreWarnings })
         .create<void | ReviewError | Error>(
           'change-review-state',
           undefined,
@@ -1453,8 +1453,8 @@ export class SubConnectorCrucible extends SubConnector {
   public closeReview(reviewId: string, summary: CloseReviewSummary): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('close')
+        .addSegment(reviewId)
+        .addSegment('close')
         .create<void | Error>('close-review', summary, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1479,8 +1479,8 @@ export class SubConnectorCrucible extends SubConnector {
   public remindIncompleteReviewers(reviewId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('remind')
+        .addSegment(reviewId)
+        .addSegment('remind')
         .create<void | Error>(
           'remind-incomplete-reviewers',
           undefined,
@@ -1511,12 +1511,12 @@ export class SubConnectorCrucible extends SubConnector {
   private searchReviewForFileInternal(detailed: boolean, repositoryId: string, path: string): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'search-for-file-detailed' : 'search-for-file';
-      let uri = this.uriReviews.addPart('search').addPart(repositoryId);
+      let uri = this.uriReviews.addSegment('search').addSegment(repositoryId);
       if (detailed) {
-        uri.addPart('details');
+        uri.addSegment('details');
       }
       uri
-        .setArg('path', normalize(path).replace(/^\/+/, '')) // remove leading slash
+        .setParameter({ 'path': normalize(path).replace(/^\/+/, '') }) // remove leading slash
         .get<Reviews | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Reviews>(HttpCodes.OK);
@@ -1571,9 +1571,9 @@ export class SubConnectorCrucible extends SubConnector {
   private getReviewInternal(detailed: boolean, reviewId: string): Promise<Review> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'get-review-detailed' : 'get-review';
-      let uri = this.uriReviews.addPart(reviewId);
+      let uri = this.uriReviews.addSegment(reviewId);
       if (detailed) {
-        uri.addPart('details');
+        uri.addSegment('details');
       }
       uri
         .get<Review | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
@@ -1613,7 +1613,7 @@ export class SubConnectorCrucible extends SubConnector {
   public deleteReview(reviewId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
+        .addSegment(reviewId)
         .del<void | Error>('delete-review', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1653,8 +1653,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewActions(reviewId: string): Promise<ReviewTransitions> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('actions')
+        .addSegment(reviewId)
+        .addSegment('actions')
         .get<ReviewTransitions | Error>(
           'get-review-actions',
           this.host,
@@ -1686,8 +1686,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewTransitions(reviewId: string): Promise<ReviewTransitions> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('actions')
+        .addSegment(reviewId)
+        .addSegment('actions')
         .get<ReviewTransitions | Error>(
           'get-review-transitions',
           this.host,
@@ -1719,8 +1719,8 @@ export class SubConnectorCrucible extends SubConnector {
   public addReviewChangeSet(reviewId: string, changeSet: AddChangeSet): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('addChangeset')
+        .addSegment(reviewId)
+        .addSegment('addChangeset')
         .create<Review | Error>(
           'add-review-change-set',
           changeSet,
@@ -1758,8 +1758,8 @@ export class SubConnectorCrucible extends SubConnector {
   public addReviewPatch(reviewId: string, patch: Patch): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('patch')
+        .addSegment(reviewId)
+        .addSegment('patch')
         .create<Review | Error>('add-review-patch', patch, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Review>(HttpCodes.OK);
@@ -1785,8 +1785,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewPatchGroups(reviewId: string): Promise<PatchGroups> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('patch')
+        .addSegment(reviewId)
+        .addSegment('patch')
         .get<PatchGroups | Error>(
           'get-review-patch-groups',
           this.host,
@@ -1827,11 +1827,11 @@ export class SubConnectorCrucible extends SubConnector {
   public addRevisionsToReviewItem(reviewId: string, reviewItemId: string, revisions: number[]): Promise<ReviewItem> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart(reviewItemId)
-        .addPart('revisions')
-        .setArgsFromArray('rev', revisions, 'join') // TODO: check
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment(reviewItemId)
+        .addSegment('revisions')
+        .setParameter({ key: 'rev', values: revisions, type: 'join' }) // TODO: check
         .create<ReviewItem | Error>(
           'add-revisions-to-review-item',
           undefined,
@@ -1871,11 +1871,11 @@ export class SubConnectorCrucible extends SubConnector {
   ): Promise<ReviewItem> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart(reviewItemId)
-        .addPart('revisions')
-        .setArgsFromArray('rev', revisions, 'join') // TODO: Check
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment(reviewItemId)
+        .addSegment('revisions')
+        .setParameter({ key: 'rev', values: revisions, type: 'join' }) // TODO: Check
         .del<ReviewItem | Error>(
           'delete-revisions-from-review-item',
           this.host,
@@ -1907,9 +1907,9 @@ export class SubConnectorCrucible extends SubConnector {
   public deleteReviewItem(reviewId: string, reviewItemId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart(reviewItemId)
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment(reviewItemId)
         .del<void | Error>('delete-review-item', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -1935,9 +1935,9 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewItem(reviewId: string, reviewItemId: string): Promise<ReviewItem> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart(reviewItemId)
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment(reviewItemId)
         .del<ReviewItem | Error>('get-review-item', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<ReviewItem>(HttpCodes.OK);
@@ -1964,9 +1964,9 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewComments(reviewId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .setArg('render', render)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .setParameter({ key: 'render', value: render })
         .get<Comments | Error>('get-review-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
@@ -1993,8 +1993,8 @@ export class SubConnectorCrucible extends SubConnector {
   public addReviewComment(reviewId: string, comment: GeneralComment): Promise<Comment> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
+        .addSegment(reviewId)
+        .addSegment('comments')
         .create<Comment | Error>(
           'add-review-comment',
           comment,
@@ -2027,10 +2027,10 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewGeneralComments(reviewId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart('general')
-        .setArg('render', render)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment('general')
+        .setParameter({ key: 'render', value: render })
         .get<Comments | Error>(
           'get-review-general-comments',
           this.host,
@@ -2062,10 +2062,10 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewVersionedComments(reviewId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('comments')
-        .addPart('versioned')
-        .setArg('render', render)
+        .addSegment(reviewId)
+        .addSegment('comments')
+        .addSegment('versioned')
+        .setParameter({ key: 'render', value: render })
         .get<Comments | Error>(
           'get-review-versioned-comments',
           this.host,
@@ -2098,11 +2098,11 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewItemComments(reviewId: string, reviewItemId: string, render?: boolean): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart(reviewItemId)
-        .addPart('comments')
-        .setArg('render', render)
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment(reviewItemId)
+        .addSegment('comments')
+        .setParameter({ key: 'render', value: render })
         .get<Comments | Error>('get-review-item-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
@@ -2129,10 +2129,10 @@ export class SubConnectorCrucible extends SubConnector {
   public addReviewItemComments(reviewId: string, reviewItemId: string, comments: Comments): Promise<Comments> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart(reviewItemId)
-        .addPart('comments')
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment(reviewItemId)
+        .addSegment('comments')
         .create<Comments | Error>(
           'add-review-item-comments',
           comments,
@@ -2165,9 +2165,9 @@ export class SubConnectorCrucible extends SubConnector {
   public deleteReviewPatch(reviewId: string, patchId: string): Promise<PatchGroups> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('patch')
-        .addPart(patchId)
+        .addSegment(reviewId)
+        .addSegment('patch')
+        .addSegment(patchId)
         .del<PatchGroups | Error>('delete-review-patch', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<PatchGroups>(HttpCodes.OK);
@@ -2193,8 +2193,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewReviewers(reviewId: string): Promise<Reviewers> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewers')
+        .addSegment(reviewId)
+        .addSegment('reviewers')
         .del<Reviewers | Error>('get-review-reviewers', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Reviewers>(HttpCodes.OK);
@@ -2221,8 +2221,8 @@ export class SubConnectorCrucible extends SubConnector {
   public addReviewReviewers(reviewId: string, reviewerIds: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewers')
+        .addSegment(reviewId)
+        .addSegment('reviewers')
         .create<Reviewers | Error>(
           'add-review-reviewers',
           reviewerIds.join(','),
@@ -2253,9 +2253,9 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewReviewersCompleted(reviewId: string): Promise<Reviewers> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewers')
-        .addPart('completed')
+        .addSegment(reviewId)
+        .addSegment('reviewers')
+        .addSegment('completed')
         .get<Reviewers | Error>(
           'get-review-reviewers-completed',
           this.host,
@@ -2286,9 +2286,9 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewReviewersUncompleted(reviewId: string): Promise<Reviewers> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewers')
-        .addPart('uncompleted')
+        .addSegment(reviewId)
+        .addSegment('reviewers')
+        .addSegment('uncompleted')
         .get<Reviewers | Error>(
           'get-review-reviewers-uncompleted',
           this.host,
@@ -2320,9 +2320,9 @@ export class SubConnectorCrucible extends SubConnector {
   public deleteReviewReviewer(reviewId: string, reviewerName: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewers')
-        .addPart(reviewerName)
+        .addSegment(reviewId)
+        .addSegment('reviewers')
+        .addSegment(reviewerName)
         .del<void | Error>('delete-review-reviewer', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == HttpCodes.OK) {
@@ -2347,8 +2347,8 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewReviewItems(reviewId: string): Promise<ReviewItems> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
         .get<ReviewItems | Error>(
           'get-review-review-items',
           this.host,
@@ -2386,9 +2386,9 @@ export class SubConnectorCrucible extends SubConnector {
   ): Promise<ReviewItem> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'add-reviews-review-item-detailed' : 'add-reviews-review-item-';
-      let uri = this.uriReviews.addPart(reviewId).addPart('reviewitems');
+      let uri = this.uriReviews.addSegment(reviewId).addSegment('reviewitems');
       if (detailed) {
-        uri.addPart('details');
+        uri.addSegment('details');
       }
       uri
         .create<ReviewItem | Error>(id, reviewItem, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
@@ -2435,9 +2435,9 @@ export class SubConnectorCrucible extends SubConnector {
   public addReviewRevisions(reviewId: string, revisions: ReviewRevisions): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart('revisions')
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment('revisions')
         .create<Review | Error>(
           'add-review-revisions',
           revisions,
@@ -2488,10 +2488,10 @@ export class SubConnectorCrucible extends SubConnector {
   public x(reviewId: string, reviewItemId: string, reviewItem: ReviewItem): Promise<ReviewItem> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .addPart(reviewId)
-        .addPart('reviewitems')
-        .addPart(reviewItemId)
-        .addPart('details')
+        .addSegment(reviewId)
+        .addSegment('reviewitems')
+        .addSegment(reviewItemId)
+        .addSegment('details')
         .replace<ReviewItem | Error>(
           'update-user-group',
           reviewItem,

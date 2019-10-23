@@ -125,7 +125,7 @@ export class Connector {
   private refreshAccessToken() {
     if (this.useAccessToken) {
       this.uriAuth
-        .addPart('login')
+        .addSegment('login')
         .create<Authentication | Error>(
           'get-auth-token',
           `userName=${this.username}&password=${this.password}`,
