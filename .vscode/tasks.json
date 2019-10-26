@@ -13,7 +13,7 @@
       "type": "npm",
       "script": "watch",
       "group": "build",
-      "problemMatcher": []
+      "problemMatcher": "$tsc-watch"
     }
   ]
 }

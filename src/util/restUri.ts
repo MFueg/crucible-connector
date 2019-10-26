@@ -2,7 +2,7 @@ import { RestClient } from 'typed-rest-client';
 import * as trc from 'typed-rest-client/Interfaces';
 import { HttpCodes, HttpClient } from 'typed-rest-client/HttpClient';
 import * as fs from 'fs';
-import { Error } from '../api/crucible/interfaces/Error';
+import { Error } from '../api/crucible/interfaces';
 
 import tempfile = require('tempfile');
 import { Uri } from './uri';
@@ -12,7 +12,7 @@ export interface IRequestOptions extends trc.IRequestOptions { }
 /**
  * Response class holding the http status code and the result object.
  * The result object can be the requested object or an error.
- * 
+ *
  * With `get` the result can easily be checked an casted to the expected type.
  * With `getError` the error case can easily be checked.
  */

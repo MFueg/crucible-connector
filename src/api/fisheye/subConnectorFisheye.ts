@@ -1,10 +1,6 @@
-import { ParentConnectorReference, SubConnector } from '../../util/subConnector';
-import { RestUri } from '../../util/restUri';
-import { ChangeSetResponse, ChangeSetIdS, ChangeSet } from './interfaces/changeSet';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { Repositories, Repository } from './interfaces/repository';
-import { FileRevisions, FileRevision } from './interfaces/fileRevision';
-import { PathInfos } from './interfaces/pathInfo';
+import { ParentConnectorReference, RestUri, SubConnector } from '../../util';
+import { ChangeSet, ChangeSetIdS, ChangeSetResponse, FileRevision, FileRevisions, PathInfos, Repositories, Repository } from './interfaces';
 
 /***********************************************************************************************
  *

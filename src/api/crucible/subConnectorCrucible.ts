@@ -1,31 +1,8 @@
 import { normalize } from 'path';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { AddChangeSet, Change, Listing } from './interfaces/changeSet';
-import { Comment, Comments, GeneralComment } from './interfaces/comment';
-import { VersionInfo } from '../interfaces/common';
-import { Error, ReviewError } from './interfaces/error';
-import { History } from './interfaces/history';
-import { Patch, PatchGroups } from './interfaces/patch';
-import { Repositories, Repository, RepositoryType } from './interfaces/repository';
-import {
-  CloseReviewSummary,
-  CreateReview,
-  Review,
-  ReviewFilter,
-  ReviewItem,
-  ReviewItems,
-  Reviews,
-  ReviewState,
-  ReviewTransitionName,
-  ReviewTransitions
-} from './interfaces/review';
-import { Reviewers } from './interfaces/reviewer';
-import { ReviewMetrics } from './interfaces/reviewMetric';
-import { ReviewRevisions } from './interfaces/reviewRevision';
-import { User, UserProfile } from './interfaces/user';
-import { VersionedEntity } from './interfaces/version';
-import { SubConnector, ParentConnectorReference } from '../../util/subConnector';
-import { RestUri } from '../../util/restUri';
+import { ParentConnectorReference, RestUri, SubConnector } from '../../util';
+import { VersionInfo } from '../interfaces';
+import { AddChangeSet, Change, CloseReviewSummary, Comment, Comments, CreateReview, Error, GeneralComment, History, Listing, Patch, PatchGroups, Repositories, Repository, RepositoryType, Review, ReviewError, Reviewers, ReviewFilter, ReviewItem, ReviewItems, ReviewMetrics, ReviewRevisions, Reviews, ReviewState, ReviewTransitionName, ReviewTransitions, User, UserProfile, VersionedEntity } from './interfaces';
 
 /***********************************************************************************************
  *

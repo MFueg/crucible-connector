@@ -1,16 +1,7 @@
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { Error } from '../crucible/interfaces/error';
-import { RepositoryType } from '../crucible/interfaces/repository';
-import { IndexingStatus } from './interfaces/indexing';
-import { PagedRequestOptions, PagedResponse } from './interfaces/pagedResponse';
-import { Project, ProjectUpdate } from './interfaces/project';
-import { RepositoryAny } from './interfaces/repository';
-import { ReviewerGroup } from './interfaces/reviewerGroup';
-import { ServerStatus } from './interfaces/serverStatus';
-import { UserCreate, UserData, UserName, UserPassword } from './interfaces/user';
-import { UserGroup, UserGroupContent, UserGroupName } from './interfaces/userGroup';
-import { ParentConnectorReference, SubConnector } from '../../util/subConnector';
-import { RestUri } from '../../util/restUri';
+import { RestUri, SubConnector, ParentConnectorReference } from '../../util';
+import { Error, RepositoryType } from '../crucible/interfaces';
+import { IndexingStatus, PagedRequestOptions, PagedResponse, Project, ProjectUpdate, RepositoryAny, ReviewerGroup, ServerStatus, UserCreate, UserData, UserGroup, UserGroupContent, UserGroupName, UserName, UserPassword } from './interfaces';
 
 /***********************************************************************************************
  *

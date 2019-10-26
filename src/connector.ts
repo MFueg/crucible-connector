@@ -1,10 +1,9 @@
 import { BasicCredentialHandler, PersonalAccessTokenCredentialHandler } from 'typed-rest-client/Handlers';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
 import { IRequestHandler } from 'typed-rest-client/Interfaces';
-import { Authentication } from './api/interfaces/common';
-import { Error } from './api/crucible/interfaces/Error';
-import { ContentType, ParentConnectorReference } from './util/subConnector';
-import { IRequestOptions, RestUri } from './util/restUri';
+import { Authentication } from './api/interfaces';
+import { Error } from './api/crucible/interfaces';
+import { IRequestOptions, RestUri, ContentType, ParentConnectorReference } from './util';
 import { SubConnectorCommon } from './api/common/SubConnectorCommon';
 import { SubConnectorFisheye } from './api/fisheye/subConnectorFisheye';
 import { SubConnectorCrucible } from './api/crucible/subConnectorCrucible';

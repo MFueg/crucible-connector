@@ -8,15 +8,18 @@ export class ParentConnectorReference {
     public readonly getHost: () => string,
     public readonly getAuthHandlers: () => IRequestHandler[],
     public readonly cerateQueryOptions: (requestMimeType?: ContentType, resultMimeType?: ContentType) => IRequestOptions
-  ) {}
+  ) { }
 }
 
+/**
+ * COnnector base class to be used as an underlying connector of the core connector.
+ */
 export class SubConnector {
   /**
    * Creates a new sub connector
    * @param parentConnector Parent connector
    */
-  public constructor(private readonly parentReference: ParentConnectorReference) {}
+  public constructor(private readonly parentReference: ParentConnectorReference) { }
 
   /**
    * Host where crucible/fisheye runs.
@@ -37,7 +40,7 @@ export class SubConnector {
    * @param requestMimeType Mime type for the request's content
    * @param resultMimeType Mime type for the response's content
    */
-  protected cerateQueryOptions(requestMimeType?: ContentType, resultMimeType?: ContentType) {
+  protected cerateQueryOptions(requestMimeType?: ContentType, resultMimeType?: ContentType): IRequestOptions {
     return this.parentReference.cerateQueryOptions(requestMimeType, resultMimeType);
   }
 }

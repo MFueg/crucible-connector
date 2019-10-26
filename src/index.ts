@@ -40,4 +40,4 @@ export { ReviewMetric, ReviewMetrics, Value } from './api/crucible/interfaces/re
 export { ReviewRevision, ReviewRevisions } from './api/crucible/interfaces/reviewRevision';
 export { Committer, Committers, Element, Preferences, User, UserProfile } from './api/crucible/interfaces/user';
 export { Version, VersionedEntity } from './api/crucible/interfaces/version';
-export { IRequestOptions, Response, RestUri } from './util/restUri';
+export { IRequestOptions, Response, RestUri } from './util';
