@@ -223,8 +223,8 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriAdmin
         .addSegment('groups')
-        .setParameter({ 'prefix': prefix })
-        .setParameter(options)
+        .setParametersFromObject({ 'prefix': prefix })
+        .setParametersFromObject(options)
         .get<PagedResponse<UserGroup> | Error>(
           'get-paged-user-groups',
           this.host,
@@ -346,7 +346,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('groups')
         .addSegment(groupName)
         .addSegment('users')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<PagedResponse<UserName> | Error>(
           'get-paged-users-of-user-group',
           this.host,
@@ -470,7 +470,7 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriAdmin
         .addSegment('users')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<PagedResponse<UserGroup> | Error>(
           'get-paged-users',
           this.host,
@@ -596,7 +596,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('users')
         .addSegment(userName)
         .addSegment('groups')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<PagedResponse<UserGroupName> | Error>(
           'get-paged-users-of-user-group',
           this.host,
@@ -662,7 +662,7 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriAdmin
         .addSegment('projects')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<PagedResponse<Project> | Error>(
           'get-paged-projects',
           this.host,
@@ -758,7 +758,7 @@ export class SubConnectorCommon extends SubConnector {
       this.uriAdmin
         .addSegment('projects')
         .addSegment(projectKey)
-        .setParameter({ 'deleteProjectReviews': deleteProjectReviews })
+        .setParametersFromObject({ 'deleteProjectReviews': deleteProjectReviews })
         .del<void | Error>('delete-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == 204) {
@@ -825,7 +825,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('projects')
         .addSegment(projectKey)
         .addSegment('default-reviewer-users')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<PagedResponse<UserName> | Error>(
           'get-paged-default-reviewer-users-of-project',
           this.host,
@@ -929,7 +929,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('projects')
         .addSegment(projectKey)
         .addSegment('default-reviewer-groups')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<PagedResponse<ReviewerGroup> | Error>(
           'get-paged-default-reviewer-groups-of-project',
           this.host,
@@ -1033,52 +1033,17 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('projects')
         .addSegment(projectKey)
         .addSegment('allowed-reviewer-users')
-        .setParameter(options)
-        .get < PagedResponse<UserName> | Error>(
-        'get-paged-allowed-reviewer-users-of-project',
-      this.host,
-        this.getAuthHandlers(),
-      this.cerateQueryOptions()
-    )
-      .then((r) => {
-        let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
-        if (result) {
-          resolve(result);
-        } else {
-            reject(r.getError());
-        }
-      })
-      .catch((e) => {
-        reject(e);
-      });
-  });
-}
- 
-/**        
-  * Add user to project's allowed reviewer users list.
-   *
-   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
-      *
-      * @param projectKey project key
-   * @param userName User to add
-   * /
-  public addAllowedReviewerUserToProject(projectKey: string, userName: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-    const user: UserName = { name: userName };
-    this.uriAdmin
-        .addSegment('projects')
-        .addSegment(projectKey)
-        .addSegment('allowed-reviewer-users')
-        .replace<void | Error>(
-  'add-default-reviewer-group-to-project',
-user,
-  this.host,
-this.getAuthHandlers(),
+        .setParametersFromObject(options)
+        .get<PagedResponse<UserName> | Error>(
+          'get-paged-allowed-reviewer-users-of-project',
+          this.host,
+          this.getAuthHandlers(),
           this.cerateQueryOptions()
-        )    
+        )
         .then((r) => {
-  if (r.statusCode == 204 || r.statusCode == 304) {
-            resolve();
+          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+          if (result) {
+            resolve(result);
           } else {
             reject(r.getError());
           }
@@ -1089,15 +1054,50 @@ this.getAuthHandlers(),
     });
   }
 
-  /**
-   * Remove user from project's allowed reviewer users list.
-   * FIXME: Can't be implemented yet, because the typed-rest-client does not provide content at the `del` method.
-   *
-   * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
-   *
-   * @param projectKey project key
-   * @param userName User to be removed.
-   */
+  /**        
+    * Add user to project's allowed reviewer users list.
+     *
+     * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+        *
+        * @param projectKey project key
+     * @param userName User to add
+     * /
+    public addAllowedReviewerUserToProject(projectKey: string, userName: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+      const user: UserName = { name: userName };
+      this.uriAdmin
+          .addSegment('projects')
+          .addSegment(projectKey)
+          .addSegment('allowed-reviewer-users')
+          .replace<void | Error>(
+    'add-default-reviewer-group-to-project',
+  user,
+    this.host,
+  this.getAuthHandlers(),
+            this.cerateQueryOptions()
+          )    
+          .then((r) => {
+    if (r.statusCode == 204 || r.statusCode == 304) {
+              resolve();
+            } else {
+              reject(r.getError());
+            }
+          })
+          .catch((e) => {
+            reject(e);
+          });
+      });
+    }
+  
+    /**
+     * Remove user from project's allowed reviewer users list.
+     * FIXME: Can't be implemented yet, because the typed-rest-client does not provide content at the `del` method.
+     *
+     * https://docs.atlassian.com/fisheye-crucible/4.5.1/wadl/fecru.html#rest-service-fecru:admin:projects:key:allowed-reviewer-users
+     *
+     * @param projectKey project key
+     * @param userName User to be removed.
+     */
   // public removeAllowedReviewerUserFromProject(projectKey: string, userName: string): Promise<void> {
   //   return new Promise((resolve, reject) => {
   //     const user: UserName = { name: userName };
@@ -1137,7 +1137,7 @@ this.getAuthHandlers(),
         .addSegment('projects')
         .addSegment(projectKey)
     .addSegment('allowed-reviewer-groups')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get < PagedResponse<ReviewerGroup> | Error>(
   'get-paged-allowed-reviewer-groups-of-project',
 this.host,
@@ -1232,7 +1232,7 @@ this.getAuthHandlers(),
    * - /rest-service-fecru/recently-visited-v1
    *
    */
-            
+
   /**
    * Creates a repository.
    *
@@ -1241,19 +1241,19 @@ this.getAuthHandlers(),
    * @param repository New project to create.
    */
   public createRepository(repository: RepositoryAny): Promise<RepositoryAny> {
-  return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.uriAdmin
         .addSegment('repositories')
         .create<RepositoryAny | Error>(
-  'create-repository',
-    repository,
-  this.host,
-    this.getAuthHandlers(),
-  this.cerateQueryOptions()
-)
-        .then( (r) => {
-  let result = r.get<RepositoryAny>(201);
-  if (result) {
+          'create-repository',
+          repository,
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<RepositoryAny>(201);
+          if (result) {
             resolve(result);
           } else {
             reject(r.getError());
@@ -1264,7 +1264,7 @@ this.getAuthHandlers(),
         });
     });
   }
-                    
+
   /**
    * Retrieve a page of repositories. Repository properties with default values may not be returned.
    *
@@ -1274,18 +1274,18 @@ this.getAuthHandlers(),
    */
   public getRepositoriesPaged(options: GetRepositoriesPagedOptions): Promise<PagedResponse<RepositoryAny>> {
     return new Promise((resolve, reject) => {
-  this.uriAdmin
+      this.uriAdmin
         .addSegment('repositories')
-        .setParameter(options)    
-        .get < PagedResponse<RepositoryAny> | Error>(
-    'get-paged-repositories',
-  this.host,
-    this.getAuthHandlers(),
-  this.cerateQueryOptions()
-)
-        .then( (r) => {
-  let result = r.get<PagedResponse<RepositoryAny>>(HttpCodes.OK);
-  if (result) {
+        .setParametersFromObject(options)
+        .get<PagedResponse<RepositoryAny> | Error>(
+          'get-paged-repositories',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
+        .then((r) => {
+          let result = r.get<PagedResponse<RepositoryAny>>(HttpCodes.OK);
+          if (result) {
             resolve(result);
           } else {
             reject(r.getError());

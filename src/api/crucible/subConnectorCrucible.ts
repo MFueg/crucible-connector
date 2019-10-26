@@ -175,7 +175,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getUsers(usernameFilter: string[] = []): Promise<User[]> {
     return new Promise((resolve, reject) => {
       this.uriUsers
-        .setParameter({ "username": usernameFilter })
+        .setParametersFromObject({ "username": usernameFilter })
         .get<User[] | Error>('get-users', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let users = r.get<User[]>(HttpCodes.OK);
@@ -265,8 +265,7 @@ export class SubConnectorCrucible extends SubConnector {
   public searchReview(term: string, maxReturn: number): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriSearch
-        .setParameter({ 'term': term })
-        .setParameter({ 'maxReturn': maxReturn })
+        .setParametersFromObject({ 'term': term, 'maxReturn': maxReturn })
         .get<Reviews | Error>('search-review', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let reviews = r.get<Reviews>(HttpCodes.OK);
@@ -293,8 +292,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviewsForIssue(jiraKey: string, maxReturn: number): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriSearch
-        .setParameter({ 'jiraKey': jiraKey })
-        .setParameter({ 'maxReturn': maxReturn })
+        .setParametersFromObject({ 'jiraKey': jiraKey, 'maxReturn': maxReturn })
         .get<Reviews | Error>('get-review-for-issue', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let reviews = r.get<Reviews>(HttpCodes.OK);
@@ -329,11 +327,11 @@ export class SubConnectorCrucible extends SubConnector {
   public searchRepositories(options: SearchRepositoriesOptions): Promise<Repositories> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .setParameter({ 'name': options.name })
-        .setParameter({ 'enabled': options.enabled })
-        .setParameter({ 'available': options.available })
-        .setParameter({ key: 'type', values: options.types, type: 'repeat' })
-        .setParameter({ 'limit': options.limit })
+        .setParametersFromObject({ 'name': options.name })
+        .setParametersFromObject({ 'enabled': options.enabled })
+        .setParametersFromObject({ 'available': options.available })
+        .setParametersFromObject({ 'type': options.types })
+        .setParametersFromObject({ 'limit': options.limit })
         .get<Repositories | Error>('search-repositories', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Repositories>(HttpCodes.OK);
@@ -430,12 +428,12 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('changes')
         .addSegment(repository)
         .addSegment(path)
-        .setParameter({ 'path': path })
-        .setParameter({ 'oldestCsid': options.oldestCsId })
-        .setParameter({ 'includeOldest': options.includeOldest })
-        .setParameter({ 'newestCsid': options.newestCsId })
-        .setParameter({ 'includeNewest': options.includeNewest })
-        .setParameter({ 'max': options.max })
+        .setParametersFromObject({ 'path': path })
+        .setParametersFromObject({ 'oldestCsid': options.oldestCsId })
+        .setParametersFromObject({ 'includeOldest': options.includeOldest })
+        .setParametersFromObject({ 'newestCsid': options.newestCsId })
+        .setParametersFromObject({ 'includeNewest': options.includeNewest })
+        .setParametersFromObject({ 'max': options.max })
         .get<Change>('search-changesets', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Change>(HttpCodes.OK);
@@ -599,7 +597,7 @@ export class SubConnectorCrucible extends SubConnector {
   public getReviews(states: ReviewState[]): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .setParameter({ key: 'state', values: states, type: 'join' })
+        .setParametersFromObject({ 'state': states.join(",") })
         .get<Reviews>('get-reviews', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -639,7 +637,7 @@ export class SubConnectorCrucible extends SubConnector {
   public createReview(review: CreateReview, state: string): Promise<Review> {
     return new Promise((resolve, reject) => {
       this.uriReviews
-        .setParameter({ 'state': state })
+        .setParametersFromObject({ 'state': state })
         .create<Review | Error>('create-review', review, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Review>(HttpCodes.OK);
@@ -697,7 +695,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(reviewId)
         .addSegment('comments')
         .addSegment(commentId)
-        .setParameter({ key: 'render', value: render })
+        .setParametersFromObject({ 'render': render })
         .get<Comment | Error>('get-review-comment', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comment>(HttpCodes.OK);
@@ -859,7 +857,7 @@ export class SubConnectorCrucible extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriReviews
         .addSegment('details')
-        .setParameter({ key: 'state', values: states, type: 'join' }) // TODO: Check
+        .setParametersFromObject({ 'state': states.join(';') }) // TODO: Check
         .get<Reviews>('get-reviews-detailed', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -948,18 +946,18 @@ export class SubConnectorCrucible extends SubConnector {
         uri.addSegment('details');
       }
       uri
-        .setParameter({ 'title': options.title })
-        .setParameter({ 'author': options.author })
-        .setParameter({ 'moderator': options.moderator })
-        .setParameter({ 'creator': options.creator })
-        .setParameter({ key: 'states', values: options.states, type: 'join' })
-        .setParameter({ 'reviewer': options.reviewer })
-        .setParameter({ 'orRoles': options.orRoles })
-        .setParameter({ 'complete': options.complete })
-        .setParameter({ 'allReviewersComplete': options.allReviewersComplete })
-        .setParameter({ 'project': options.project })
-        .setParameter({ 'fromDate': options.fromDate ? options.fromDate.getMilliseconds() : undefined })
-        .setParameter({ 'toDate': options.toDate ? options.toDate.getMilliseconds() : undefined })
+        .setParametersFromObject({ 'title': options.title })
+        .setParametersFromObject({ 'author': options.author })
+        .setParametersFromObject({ 'moderator': options.moderator })
+        .setParametersFromObject({ 'creator': options.creator })
+        .setParametersFromObject({ 'states': (options.states || []).join(',') })
+        .setParametersFromObject({ 'reviewer': options.reviewer })
+        .setParametersFromObject({ 'orRoles': options.orRoles })
+        .setParametersFromObject({ 'complete': options.complete })
+        .setParametersFromObject({ 'allReviewersComplete': options.allReviewersComplete })
+        .setParametersFromObject({ 'project': options.project })
+        .setParametersFromObject({ 'fromDate': options.fromDate ? options.fromDate.getMilliseconds() : undefined })
+        .setParametersFromObject({ 'toDate': options.toDate ? options.toDate.getMilliseconds() : undefined })
         .get<Reviews>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
@@ -1018,7 +1016,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('comments')
         .addSegment(commentId)
         .addSegment('replies')
-        .setParameter({ key: 'render', value: render })
+        .setParametersFromObject({ 'render': render })
         .get<Comments | Error>('get-comment-replies', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
@@ -1331,7 +1329,7 @@ export class SubConnectorCrucible extends SubConnector {
       this.uriReviews
         .addSegment(reviewId)
         .addSegment('complete')
-        .setParameter({ 'ignoreWarnings': ignoreWarnings })
+        .setParametersFromObject({ 'ignoreWarnings': ignoreWarnings })
         .create<void | ReviewError | Error>(
           'complete-review',
           undefined,
@@ -1370,7 +1368,7 @@ export class SubConnectorCrucible extends SubConnector {
       this.uriReviews
         .addSegment(reviewId)
         .addSegment('uncomplete')
-        .setParameter({ 'ignoreWarnings': ignoreWarnings })
+        .setParametersFromObject({ 'ignoreWarnings': ignoreWarnings })
         .create<void | ReviewError | Error>(
           'complete-review',
           undefined,
@@ -1414,8 +1412,7 @@ export class SubConnectorCrucible extends SubConnector {
       this.uriReviews
         .addSegment(reviewId)
         .addSegment('transition')
-        .setParameter({ 'action': transition })
-        .setParameter({ 'ignoreWarnings': ignoreWarnings })
+        .setParametersFromObject({ 'action': transition, 'ignoreWarnings': ignoreWarnings })
         .create<void | ReviewError | Error>(
           'change-review-state',
           undefined,
@@ -1516,7 +1513,7 @@ export class SubConnectorCrucible extends SubConnector {
         uri.addSegment('details');
       }
       uri
-        .setParameter({ 'path': normalize(path).replace(/^\/+/, '') }) // remove leading slash
+        .setParametersFromObject({ 'path': normalize(path).replace(/^\/+/, '') }) // remove leading slash
         .get<Reviews | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<Reviews>(HttpCodes.OK);
@@ -1831,7 +1828,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('reviewitems')
         .addSegment(reviewItemId)
         .addSegment('revisions')
-        .setParameter({ key: 'rev', values: revisions, type: 'join' }) // TODO: check
+        .setParametersFromObject({ 'rev': revisions.join(',') }) // TODO: check
         .create<ReviewItem | Error>(
           'add-revisions-to-review-item',
           undefined,
@@ -1875,7 +1872,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('reviewitems')
         .addSegment(reviewItemId)
         .addSegment('revisions')
-        .setParameter({ key: 'rev', values: revisions, type: 'join' }) // TODO: Check
+        .setParametersFromObject({ 'rev': revisions.join(',') }) // TODO: Check
         .del<ReviewItem | Error>(
           'delete-revisions-from-review-item',
           this.host,
@@ -1966,7 +1963,7 @@ export class SubConnectorCrucible extends SubConnector {
       this.uriReviews
         .addSegment(reviewId)
         .addSegment('comments')
-        .setParameter({ key: 'render', value: render })
+        .setParametersFromObject({ 'render': render })
         .get<Comments | Error>('get-review-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);
@@ -2030,7 +2027,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(reviewId)
         .addSegment('comments')
         .addSegment('general')
-        .setParameter({ key: 'render', value: render })
+        .setParametersFromObject({ 'render': render })
         .get<Comments | Error>(
           'get-review-general-comments',
           this.host,
@@ -2065,7 +2062,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(reviewId)
         .addSegment('comments')
         .addSegment('versioned')
-        .setParameter({ key: 'render', value: render })
+        .setParametersFromObject({ 'render': render })
         .get<Comments | Error>(
           'get-review-versioned-comments',
           this.host,
@@ -2102,7 +2099,7 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('reviewitems')
         .addSegment(reviewItemId)
         .addSegment('comments')
-        .setParameter({ key: 'render', value: render })
+        .setParametersFromObject({ 'render': render })
         .get<Comments | Error>('get-review-item-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Comments>(HttpCodes.OK);

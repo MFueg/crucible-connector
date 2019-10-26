@@ -5,11 +5,19 @@ import * as fs from 'fs';
 import { Error } from '../api/crucible/interfaces/Error';
 
 import tempfile = require('tempfile');
+import { Uri } from './uri';
 
 export interface IRequestOptions extends trc.IRequestOptions { }
 
+/**
+ * Response class holding the http status code and the result object.
+ * The result object can be the requested object or an error.
+ * 
+ * With `get` the result can easily be checked an casted to the expected type.
+ * With `getError` the error case can easily be checked.
+ */
 export class Response<T> {
-  public constructor(public readonly statusCode: number, public readonly result: T | null) { }
+  public constructor(public readonly statusCode: number, public readonly result: T | Error | null) { }
 
   public get<U = T>(code?: HttpCodes): U | undefined {
     if (!code || code != this.statusCode) {
@@ -27,7 +35,7 @@ export class Response<T> {
       message: fallbackMessage
     };
     if (this.result != null) {
-      let e: Error | undefined = (this.result as unknown) as Error;
+      let e: Error | undefined = this.result as Error;
       return e ? e : error;
     } else {
       return error;
@@ -35,100 +43,19 @@ export class Response<T> {
   }
 }
 
-export interface ParameterOptionsDefault {
-  readonly key: string;
-  readonly value: any | undefined;
-}
+/**
+ * Uri class with REST methods.
+ */
+export class RestUri extends Uri {
 
-export interface ParameterOptionsArray {
-  readonly key: string;
-  readonly values: any[] | undefined;
-  readonly type?: 'join' | 'repeat';
-}
-
-export interface ParameterOptionsObject {
-  [key: string]: any;
-}
-
-export type ParameterOptions = ParameterOptionsDefault | ParameterOptionsArray | ParameterOptionsObject;
-
-function isParameterOptionsDefault(options: ParameterOptions): options is ParameterOptionsDefault {
-  let opts = (options as ParameterOptionsDefault);
-  return opts.value !== undefined && opts.key !== undefined;
-}
-function isParameterOptionsArray(options: ParameterOptions): options is ParameterOptionsArray {
-  let opts = (options as ParameterOptionsArray);
-  return opts.values !== undefined && opts.key !== undefined;
-}
-function isParameterOptionsObject(options: ParameterOptions): options is ParameterOptionsObject {
-  return !isParameterOptionsArray(options) && !isParameterOptionsDefault(options);
-}
-
-export class RestUri {
-  public readonly segments = new Array<string>();
-  public readonly args = new Map<string, string[]>();
-
-  public constructor(private base: string, ...segments: string[]) {
-    for (var i = 0; i < segments.length; i++) {
-      this.segments.push(segments[i]);
-    }
-  }
-
-  public setParameter(options: ParameterOptions) {
-    if (isParameterOptionsDefault(options)) {
-      this.setParam(options.key, options.value);
-    } else if (isParameterOptionsArray(options)) {
-      this.setParamsFromArray(options.key, options.values, options.type);
-    } else if (isParameterOptionsObject(options)) {
-      this.setParamsFromObject(options);
-    }
-    return this;
-  }
-
-  private setParamsFromArray(key: string, values: any[] | undefined, type: 'join' | 'repeat' = 'join') {
-    if (values != undefined && values.length > 0) {
-      const strValues = values.map((v) => String(v));
-      const newValues: string[] = type == 'join' ? [strValues.join(',')] : strValues;
-      this.args.set(key, (this.args.get(key) || []).concat(newValues));
-    }
-    return this;
-  }
-
-  public setParamsFromObject(values: object | undefined) {
-    if (values != undefined) {
-      Object.entries(values).forEach((v) => {
-        this.setParam(v[0], v[1]);
-      });
-    }
-    return this;
-  }
-
-  private setParam(key: string, value: any | undefined) {
-    if (value != undefined) {
-      this.args.set(key, (this.args.get(key) || []).concat(String(value)));
-    }
-    return this;
-  }
-
-  public addSegment(segment: string) {
-    this.segments.push(segment);
-    return this;
-  }
-
-  public str(): string {
-    let segments = this.segments.map((p) => encodeURI(p));
-    segments.unshift(this.base);
-    let url = segments.join('/');
-    let urlParams = new Array<string>();
-    this.args.forEach((vs, k) => {
-      vs.forEach((v) => {
-        urlParams.push(`${encodeURI(k)}=${encodeURI(v)}`);
-      });
-    });
-    if (urlParams.length > 0) {
-      url += '?' + urlParams.join('&');
-    }
-    return url;
+  /**
+   * Creates a new object with a host information `base` and with optional `segments`.
+   *
+   * @param base Host information (e.g. example.com)
+   * @param segments first segments of the uri
+   */
+  public constructor(base: string, ...segments: string[]) {
+    super(base, ...segments);
   }
 
   /**
@@ -148,7 +75,7 @@ export class RestUri {
     let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
       client
-        .get<Result>(this.str())
+        .get<Result>(this.toString())
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
         })
@@ -177,7 +104,7 @@ export class RestUri {
     let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
       client
-        .create<Result>(this.str(), content)
+        .create<Result>(this.toString(), content)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
         })
@@ -206,7 +133,7 @@ export class RestUri {
     let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
       client
-        .update<Result>(this.str(), content)
+        .update<Result>(this.toString(), content)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
         })
@@ -235,7 +162,7 @@ export class RestUri {
     let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
       client
-        .update<Result>(this.str(), content)
+        .update<Result>(this.toString(), content)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
         })
@@ -262,7 +189,7 @@ export class RestUri {
     let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
       client
-        .del<Result>(this.str())
+        .del<Result>(this.toString())
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
         })
@@ -282,7 +209,7 @@ export class RestUri {
     let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
       client
-        .uploadStream<Result>('verb', this.str(), stream)
+        .uploadStream<Result>('verb', this.toString(), stream)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
         })
@@ -303,7 +230,7 @@ export class RestUri {
       let file: NodeJS.WritableStream = fs.createWriteStream(tempFilePath);
       let client = new HttpClient(id, authHandlers, requestOptions);
       client
-        .get(host + '/' + this.str())
+        .get(host + '/' + this.toString())
         .then((r) => {
           r.message.pipe(file).on('close', () => {
             let body: string = fs.readFileSync(tempFilePath).toString();

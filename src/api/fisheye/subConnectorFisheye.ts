@@ -103,7 +103,7 @@ export class SubConnectorFisheye extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriChangeSets
         .addSegment('listChangesets')
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<ChangeSetResponse | Error>('search-repository-change-sets',
           this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
@@ -199,7 +199,7 @@ export class SubConnectorFisheye extends SubConnector {
       this.uriRevision
         .addSegment('pathHistory')
         .addSegment(repositoryKey)
-        .setParameter({ path: path })
+        .setParametersFromObject({ path: path })
         .get<FileRevisions | Error>('get-file-revisions', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<FileRevisions>(HttpCodes.OK);
@@ -229,7 +229,7 @@ export class SubConnectorFisheye extends SubConnector {
       this.uriRevision
         .addSegment('revisionTags')
         .addSegment(repositoryKey)
-        .setParameter({ path: path, revision: revisionId })
+        .setParametersFromObject({ path: path, revision: revisionId })
         .get<FileRevisions | Error>('get-file-revision-tags', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<FileRevisions>(HttpCodes.OK);
@@ -257,7 +257,7 @@ export class SubConnectorFisheye extends SubConnector {
       this.uriRevision
         .addSegment('pathList')
         .addSegment(repositoryKey)
-        .setParameter({ path: path })
+        .setParametersFromObject({ path: path })
         .get<PathInfos | Error>('get-file-infos', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<PathInfos>(HttpCodes.OK);
@@ -287,7 +287,7 @@ export class SubConnectorFisheye extends SubConnector {
       this.uriRevision
         .addSegment('revisionInfo')
         .addSegment(repositoryKey)
-        .setParameter({ path: path, revision: revisionId })
+        .setParametersFromObject({ path: path, revision: revisionId })
         .get<FileRevision | Error>('get-file-revision', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<FileRevision>(HttpCodes.OK);
@@ -315,7 +315,7 @@ export class SubConnectorFisheye extends SubConnector {
       this.uriRevision
         .addSegment('revisionInfo')
         .addSegment(repositoryKey)
-        .setParameter(options)
+        .setParametersFromObject(options)
         .get<ChangeSetIdS | Error>('get-repository-change-sets', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let result = r.get<ChangeSetIdS>(HttpCodes.OK);
