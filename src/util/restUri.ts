@@ -7,7 +7,7 @@ import { Error } from '../api/crucible/interfaces';
 import tempfile = require('tempfile');
 import { Uri } from './uri';
 
-export interface IRequestOptions extends trc.IRequestOptions { }
+export interface IRequestOptions extends trc.IRequestOptions {}
 
 /**
  * Response class holding the http status code and the result object.
@@ -17,7 +17,7 @@ export interface IRequestOptions extends trc.IRequestOptions { }
  * With `getError` the error case can easily be checked.
  */
 export class Response<T> {
-  public constructor(public readonly statusCode: number, public readonly result: T | Error | null) { }
+  public constructor(public readonly statusCode: number, public readonly result: T | Error | null) {}
 
   public get<U = T>(code?: HttpCodes): U | undefined {
     if (!code || code != this.statusCode) {
@@ -47,7 +47,6 @@ export class Response<T> {
  * Uri class with REST methods.
  */
 export class RestUri extends Uri {
-
   /**
    * Creates a new object with a host information `base` and with optional `segments`.
    *

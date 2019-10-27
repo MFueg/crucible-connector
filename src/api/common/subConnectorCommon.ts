@@ -1,7 +1,23 @@
 import { HttpCodes } from 'typed-rest-client/HttpClient';
 import { RestUri, SubConnector, ParentConnectorReference } from '../../util';
 import { Error, RepositoryType } from '../crucible/interfaces';
-import { IndexingStatus, PagedRequestOptions, PagedResponse, Project, ProjectUpdate, RepositoryAny, ReviewerGroup, ServerStatus, UserCreate, UserData, UserGroup, UserGroupContent, UserGroupName, UserName, UserPassword } from './interfaces';
+import {
+  IndexingStatus,
+  PagedRequestOptions,
+  PagedResponse,
+  Project,
+  ProjectUpdate,
+  RepositoryAny,
+  ReviewerGroup,
+  ServerStatus,
+  UserCreate,
+  UserData,
+  UserGroup,
+  UserGroupContent,
+  UserGroupName,
+  UserName,
+  UserPassword
+} from './interfaces';
 
 /***********************************************************************************************
  *
@@ -214,7 +230,7 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriAdmin
         .addSegment('groups')
-        .setParametersFromObject({ 'prefix': prefix })
+        .setParametersFromObject({ prefix: prefix })
         .setParametersFromObject(options)
         .get<PagedResponse<UserGroup> | Error>(
           'get-paged-user-groups',
@@ -749,7 +765,7 @@ export class SubConnectorCommon extends SubConnector {
       this.uriAdmin
         .addSegment('projects')
         .addSegment(projectKey)
-        .setParametersFromObject({ 'deleteProjectReviews': deleteProjectReviews })
+        .setParametersFromObject({ deleteProjectReviews: deleteProjectReviews })
         .del<void | Error>('delete-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           if (r.statusCode == 204) {

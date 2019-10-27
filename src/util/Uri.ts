@@ -1,4 +1,3 @@
-
 /**
  * Interface to define a set of uri parameters.
  * Each property name will be used as url parameter key.
@@ -35,15 +34,17 @@ export class Uri {
    */
   public setParametersFromObject(parameter: UriParameterObject) {
     if (parameter != undefined) {
-      Object.entries(parameter).filter(v => v[1] != undefined).forEach((v) => {
-        const name = v[0];
-        const value = v[1];
-        if (Array.isArray(value)) {
-          this.setParametersFromArray(name, value);
-        } else {
-          this.setParameter(name, value);
-        }
-      });
+      Object.entries(parameter)
+        .filter((v) => v[1] != undefined)
+        .forEach((v) => {
+          const name = v[0];
+          const value = v[1];
+          if (Array.isArray(value)) {
+            this.setParametersFromArray(name, value);
+          } else {
+            this.setParameter(name, value);
+          }
+        });
     }
     return this;
   }

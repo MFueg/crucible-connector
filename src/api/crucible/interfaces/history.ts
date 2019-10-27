@@ -1,6 +1,6 @@
 import { Revision } from './changeSet';
 
 export interface History {
-	path: string;
-	revision: Revision[];
+  path: string;
+  revision: Revision[];
 }

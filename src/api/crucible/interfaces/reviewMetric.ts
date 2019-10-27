@@ -1,16 +1,16 @@
 export interface ReviewMetrics {
-	metricsData: ReviewMetric[];
+  metricsData: ReviewMetric[];
 }
 
 export interface ReviewMetric {
-	type: string;
-	configVersion: number;
-	label: string;
-	defaultValue: Value;
-	values: Value[];
+  type: string;
+  configVersion: number;
+  label: string;
+  defaultValue: Value;
+  values: Value[];
 }
 
 export interface Value {
-	name: string;
-	value: number;
+  name: string;
+  value: number;
 }

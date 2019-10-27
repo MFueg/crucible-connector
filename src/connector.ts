@@ -38,7 +38,7 @@ export class Connector {
     this.basicAuthHandler = new BasicCredentialHandler(this.username, this.password);
 
     // Initialize sub connectors:
-    let parentReference = new ParentConnectorReference(
+    const parentReference = new ParentConnectorReference(
       () => {
         return this.host;
       },
@@ -90,17 +90,17 @@ export class Connector {
   /**
    * Common API
    */
-  public common: SubConnectorCommon;
+  public readonly common: SubConnectorCommon;
 
   /**
    * Fisheye API
    */
-  public fisheye: SubConnectorFisheye;
+  public readonly fisheye: SubConnectorFisheye;
 
   /**
    * Crucible API
    */
-  public crucible: SubConnectorCrucible;
+  public readonly crucible: SubConnectorCrucible;
 
   /***********************************************************************************************
    *

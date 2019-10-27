@@ -25,24 +25,30 @@
   ],
   "scripts": {
     "test": "mocha -r ts-node/register src/**/*.test.ts --reporter spec",
-    "build": "tsc --pretty",
     "prepublishOnly": "npm run build",
-    "watch": "npm run build -- --watch"
+    "build": "webpack --mode production",
+    "build-dev": "webpack --mode development",
+    "watch": "webpack --watch --mode development"
   },
   "dependencies": {
-    "@types/node": "^12.11.1",
+    "@types/node": "^12.11.7",
     "tempfile": "^3.0.0",
     "tslib": "^1.10.0",
     "typed-rest-client": "^1.5.0"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.3",
     "@types/mocha": "^5.2.7",
-    "chai": "^4.2.0",
     "mocha": "^6.2.2",
     "mockttp": "^0.19.0",
+    "prettier": "^1.18.2",
     "ts-node": "^8.4.1",
-    "typescript": "^3.6.4"
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.6.4",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9",
+    "webpack-dev-server": "^3.9.0"
   },
   "contributors": [
     {

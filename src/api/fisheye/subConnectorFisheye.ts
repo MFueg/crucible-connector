@@ -1,6 +1,15 @@
 import { HttpCodes } from 'typed-rest-client/HttpClient';
 import { ParentConnectorReference, RestUri, SubConnector } from '../../util';
-import { ChangeSet, ChangeSetIdS, ChangeSetResponse, FileRevision, FileRevisions, PathInfos, Repositories, Repository } from './interfaces';
+import {
+  ChangeSet,
+  ChangeSetIdS,
+  ChangeSetResponse,
+  FileRevision,
+  FileRevisions,
+  PathInfos,
+  Repositories,
+  Repository
+} from './interfaces';
 
 /***********************************************************************************************
  *
@@ -100,8 +109,12 @@ export class SubConnectorFisheye extends SubConnector {
       this.uriChangeSets
         .addSegment('listChangesets')
         .setParametersFromObject(options)
-        .get<ChangeSetResponse | Error>('search-repository-change-sets',
-          this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<ChangeSetResponse | Error>(
+          'search-repository-change-sets',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let status = r.get<ChangeSetResponse>(HttpCodes.OK);
           if (status) {
@@ -174,7 +187,6 @@ export class SubConnectorFisheye extends SubConnector {
     });
   }
 
-
   /**
    * Uri for requests to the repository domain
    */
@@ -220,13 +232,22 @@ export class SubConnectorFisheye extends SubConnector {
    * @param path the path of the filerevision, with respect to the fisheye repository root.
    * @param revisionId the id of the filerevision to retrieve.
    */
-  public getRepositoryFileRevisionTags(repositoryKey: string, path: string, revisionId: string): Promise<FileRevisions> {
+  public getRepositoryFileRevisionTags(
+    repositoryKey: string,
+    path: string,
+    revisionId: string
+  ): Promise<FileRevisions> {
     return new Promise((resolve, reject) => {
       this.uriRevision
         .addSegment('revisionTags')
         .addSegment(repositoryKey)
         .setParametersFromObject({ path: path, revision: revisionId })
-        .get<FileRevisions | Error>('get-file-revision-tags', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<FileRevisions | Error>(
+          'get-file-revision-tags',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<FileRevisions>(HttpCodes.OK);
           if (result) {
@@ -306,13 +327,21 @@ export class SubConnectorFisheye extends SubConnector {
    * @param repositoryKey Key of the repository
    * @param options Options to request the list
    */
-  public getRepositoryChangeSets(repositoryKey: string, options: GetRepositoryChangeSetsOptions): Promise<ChangeSetIdS> {
+  public getRepositoryChangeSets(
+    repositoryKey: string,
+    options: GetRepositoryChangeSetsOptions
+  ): Promise<ChangeSetIdS> {
     return new Promise((resolve, reject) => {
       this.uriRevision
         .addSegment('revisionInfo')
         .addSegment(repositoryKey)
         .setParametersFromObject(options)
-        .get<ChangeSetIdS | Error>('get-repository-change-sets', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<ChangeSetIdS | Error>(
+          'get-repository-change-sets',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<ChangeSetIdS>(HttpCodes.OK);
           if (result) {
@@ -340,7 +369,12 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment('changeset')
         .addSegment(repositoryKey)
         .addSegment(changeSetId)
-        .get<ChangeSet | Error>('get-repository-change-set', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<ChangeSet | Error>(
+          'get-repository-change-set',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
           let result = r.get<ChangeSet>(HttpCodes.OK);
           if (result) {
@@ -356,5 +390,4 @@ export class SubConnectorFisheye extends SubConnector {
   }
 
   // TODO: Some methods skipped - might be implemented later
-
 }

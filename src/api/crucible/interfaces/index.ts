@@ -10,4 +10,3 @@ export * from './reviewRevision';
 export * from './reviewer';
 export * from './user';
 export * from './version';
-
