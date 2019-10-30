@@ -17,6 +17,7 @@
     "email": "matthias.fueg@dampsoft.de"
   },
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "typings": "dist/index.d.ts",
   "keywords": [
     "typescript",
@@ -24,11 +25,11 @@
     "crucible"
   ],
   "scripts": {
+    "build": "webpack --config webpack.prod.js",
+    "build-dev": "webpack --config webpack.dev.js",
+    "watch": "webpack --config webpack.dev.js --watch",
     "test": "mocha -r ts-node/register src/**/*.test.ts --reporter spec",
-    "prepublishOnly": "npm run build",
-    "build": "webpack --mode production",
-    "build-dev": "webpack --mode development",
-    "watch": "webpack --watch --mode development"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@types/node": "^12.11.7",
@@ -38,17 +39,20 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
+    "clean-webpack-plugin": "^3.0.0",
     "mocha": "^6.2.2",
     "mockttp": "^0.19.0",
     "prettier": "^1.18.2",
+    "terser-webpack-plugin": "^2.2.1",
     "ts-node": "^8.4.1",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.0.1",
     "ts-loader": "^6.2.1",
     "typescript": "^3.6.4",
+    "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
-    "webpack-dev-server": "^3.9.0"
+    "webpack-merge": "^4.2.2"
   },
   "contributors": [
     {

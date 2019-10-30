@@ -1,4 +1,11 @@
-.vscode/
-src/
-*.vscode-workspace
-.prettierrc
+.*
+node_modules
+.vscode
+src
+**/*.code-workspace
+**/.prettierrc
+**/.prettierrc.json
+**/webpack.*.js
+**/tslint.json
+**/tsconfig.json
+**/.vscodeignore
