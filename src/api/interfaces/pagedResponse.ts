@@ -16,6 +16,8 @@ export interface PagedResponse<T> extends PagedResponseBase {
 
 /**
  * Utility function to calculate new paged request options based on a previous response.
+ * Returns a new request object for the next page or `undefined` if it was the last page.
+ *
  * @param lastResult Result to be continued.
  * @param limit Optional limit for the new request. If not set, the old limit will be used.
  */
