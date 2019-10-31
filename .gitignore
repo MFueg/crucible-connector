@@ -3,3 +3,4 @@ out
 dist
 *.vsix
 package.*.json
+**/*.intern.test.ts

@@ -1,5 +1,5 @@
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { RestUri, SubConnector, ParentConnectorReference } from '../../util';
+import { SubConnector, ParentConnectorReference } from '../../util';
 import { Error, RepositoryType } from '../crucible/interfaces';
 import {
   IndexingStatus,
@@ -88,7 +88,7 @@ export class SubConnectorCommon extends SubConnector {
    * Uri for requests to the indexing domain
    */
   private get uriIndexing() {
-    return new RestUri('/rest-service-fecru/indexing-status-v1');
+    return this.getRestUri('/rest-service-fecru/indexing-status-v1');
   }
 
   /**
@@ -132,7 +132,7 @@ export class SubConnectorCommon extends SubConnector {
    * Uri for requests to the user domain
    */
   // private get uriUserPreferences() {
-  //   return new RestUri('/rest-service-fecru/user-prefs-v1');
+  //   return this.getRestUri('/rest-service-fecru/user-prefs-v1');
   // }
 
   /**
@@ -151,7 +151,7 @@ export class SubConnectorCommon extends SubConnector {
    * Uri for requests to the indexing domain
    */
   private get uriServer() {
-    return new RestUri('/rest-service-fecru/server-v1');
+    return this.getRestUri('/rest-service-fecru/server-v1');
   }
 
   /**
@@ -183,7 +183,7 @@ export class SubConnectorCommon extends SubConnector {
    * Uri for requests to the indexing domain
    */
   private get uriAdmin() {
-    return new RestUri('/rest-service-fecru/admin');
+    return this.getRestUri('/rest-service-fecru/admin');
   }
 
   /**

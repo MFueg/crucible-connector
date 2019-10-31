@@ -1,6 +1,6 @@
 import { normalize } from 'path';
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { ParentConnectorReference, RestUri, SubConnector } from '../../util';
+import { ParentConnectorReference, SubConnector } from '../../util';
 import { VersionInfo } from '../interfaces';
 import {
   AddChangeSet,
@@ -34,6 +34,8 @@ import {
   UserProfile,
   VersionedEntity
 } from './interfaces';
+import { PagedResponse, PagedRequestOptions } from '../common/interfaces';
+import { Participant, ParticipantUser } from './interfaces/participant';
 
 /***********************************************************************************************
  *
@@ -148,11 +150,48 @@ export interface SearchReviewsOptions {
   readonly toDate?: Date;
 }
 
+export interface GetAllowedReviewParticipantsOptions extends PagedRequestOptions {
+  /**
+   * The query string to search groups containing the string in the name,
+   * and to search users containing the string in username, name and email
+   */
+  readonly query?: string;
+
+  /**
+   * True if it should search users by username, displayname and email. (default: true)
+   */
+  readonly includeGroups?: boolean;
+
+  /**
+   * True if it should search groups by name. (default: true)
+   */
+  readonly includeUsers?: boolean;
+}
+
+export interface GetAllowedReviewMembersOptions extends PagedRequestOptions {
+  /**
+   * True if it should search users by username, displayname and email. (default: true)
+   */
+  readonly includeGroups?: boolean;
+
+  /**
+   * True if it should search groups by name. (default: true)
+   */
+  readonly includeUsers?: boolean;
+
+  /**
+   * The maximum number of results to be returned. (default: 25)
+   */
+  readonly limit?: number;
+}
+
 /**
  * SubConnector class that provides API methods of crucible.
  *
  * Crucible API - Documentation
  * https://docs.atlassian.com/fisheye-crucible/latest/wadl/crucible.html
+ * 
+ * Supported versions: 5.4.x, 5.7.0
  */
 export class SubConnectorCrucible extends SubConnector {
   /**
@@ -169,7 +208,7 @@ export class SubConnectorCrucible extends SubConnector {
    * Uri for requests to the user domain
    */
   private get uriUsers() {
-    return new RestUri('/rest-service/users-v1');
+    return this.getRestUri('/rest-service/users-v1');
   }
 
   /**
@@ -259,7 +298,7 @@ export class SubConnectorCrucible extends SubConnector {
    * Uri for requests to the search domain
    */
   private get uriSearch() {
-    return new RestUri('/rest-service/search-v1');
+    return this.getRestUri('/rest-service/search-v1');
   }
 
   /**
@@ -322,7 +361,7 @@ export class SubConnectorCrucible extends SubConnector {
    * Uri for requests to the repository domain
    */
   private get uriRepositories() {
-    return new RestUri('/rest-service/repositories-v1');
+    return this.getRestUri('/rest-service/repositories-v1');
   }
 
   /**
@@ -426,7 +465,7 @@ export class SubConnectorCrucible extends SubConnector {
    *
    * @param repository the key of the Crucible SCM plugin repository.
    * @param path only show change sets which contain at least one revision with a path under this path.
-   *             Changesets with some revisions outside this path still include all revisions.
+   *             Change sets with some revisions outside this path still include all revisions.
    *             i.e. Revisions outside the path are **not** excluded from the change set.
    * @param options Options to search change sets.
    */
@@ -590,7 +629,7 @@ export class SubConnectorCrucible extends SubConnector {
    * Uri for requests to the review domain
    */
   private get uriReviews() {
-    return new RestUri('/rest-service/reviews-v1');
+    return this.getRestUri('/rest-service/reviews-v1');
   }
 
   /**
@@ -949,7 +988,8 @@ export class SubConnectorCrucible extends SubConnector {
   private searchReviewsInternal(detailed: boolean, options: SearchReviewsOptions): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'search-reviews-detailed' : 'search-reviews';
-      let uri = this.uriReviews.addSegment('filter');
+      let uri = this.uriReviews
+        .addSegment('filter');
       if (detailed) {
         uri.addSegment('details');
       }
@@ -966,7 +1006,7 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ project: options.project })
         .setParametersFromObject({ fromDate: options.fromDate ? options.fromDate.getMilliseconds() : undefined })
         .setParametersFromObject({ toDate: options.toDate ? options.toDate.getMilliseconds() : undefined })
-        .get<Reviews>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<Reviews | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
           let content = r.get<Reviews>(HttpCodes.OK);
           if (content) {
@@ -2517,4 +2557,87 @@ export class SubConnectorCrucible extends SubConnector {
         });
     });
   }
+
+
+
+  /********************** REVIEWER API **********************/
+
+  /**
+   * Uri for requests to the reviewer search domain
+   */
+  private get uriReviewers() {
+    return this.getRestUri('/rest-service/reviewer-search');
+  }
+
+  /**
+   * Get review participants (users and groups) which are allowed to participate in given review and match a query.
+   * ! Available in crucible version >= 4.7.2
+   *
+   * @param reviewId review id determining allowed reviewers
+   * @param options options to search for reviews.
+   */
+  public getAllowedParticipantsForReview(reviewId: string, options: GetAllowedReviewParticipantsOptions): Promise<PagedResponse<Participant>> {
+    return new Promise((resolve, reject) => {
+      this.uriReviewers
+        .addSegment(reviewId)
+        .addSegment('search')
+        .setParametersFromObject({
+          q: options.query,
+          includeGroups: options.includeGroups,
+          includeUsers: options.includeUsers,
+          limit: options.limit,
+          start: options.start
+        })
+        .get<PagedResponse<Participant>>('get-allowed-review-participants', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          let content = r.get<PagedResponse<Participant>>(HttpCodes.OK);
+          if (content) {
+            resolve(content);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * Get review participants (users and groups) which are allowed to participate in given review and match a query.
+   *
+   * ! Available in crucible version >= 4.7.2
+   *
+   * Note that this path doesn't follow the REST standard, like {reviewId}/groups/{groupName}/members, 
+   * because there is a chance to have ambiguous path for different resources. 
+   * For example if the group is 'department/members' and you want to GET this entity, you call 
+   * GET {reviewId}/groups/department/members but this could be treated as GET entity of group 'department/members' or
+   * GET members of group 'department'
+   *
+   * @param reviewId review id determining allowed reviewers
+   * @param groupName review id determining allowed reviewers
+   * @param options options to search for members.
+   */
+  public getAllowedMembersForReview(reviewId: string, groupName: string, options: GetAllowedReviewMembersOptions): Promise<PagedResponse<ParticipantUser>> {
+    return new Promise((resolve, reject) => {
+      this.uriReviewers
+        .addSegment(reviewId)
+        .addSegment('group-members')
+        .addSegment(groupName)
+        .setParametersFromObject(options)
+        .get<PagedResponse<ParticipantUser>>('get-allowed-review-members', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .then((r) => {
+          let content = r.get<PagedResponse<ParticipantUser>>(HttpCodes.OK);
+          if (content) {
+            resolve(content);
+          } else {
+            reject(r.getError());
+          }
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
 }

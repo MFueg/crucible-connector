@@ -1,14 +1,13 @@
 import { IRequestHandler } from 'typed-rest-client/Interfaces';
-import { IRequestOptions } from './restUri';
+import { IRequestOptions, RestUri } from './restUri';
 
 export type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
 
-export class ParentConnectorReference {
-  public constructor(
-    public readonly getHost: () => string,
-    public readonly getAuthHandlers: () => IRequestHandler[],
-    public readonly cerateQueryOptions: (requestMimeType?: ContentType, resultMimeType?: ContentType) => IRequestOptions
-  ) { }
+export interface ParentConnectorReference {
+  readonly getHost: () => string;
+  readonly getWebContext: () => string | undefined;
+  readonly getAuthHandlers: () => IRequestHandler[];
+  readonly cerateQueryOptions: (requestMimeType?: ContentType, resultMimeType?: ContentType) => IRequestOptions;
 }
 
 /**
@@ -26,6 +25,22 @@ export class SubConnector {
    */
   protected get host() {
     return this.parentReference.getHost();
+  }
+
+  /**
+   * WebContext where crucible/fisheye runs.
+   * It is the first part of the url after the host/port information.
+   */
+  private get webContext() {
+    return this.parentReference.getWebContext() || "";
+  }
+
+  /**
+   * Creates a new RestUri with the proper context settings.
+   * @param uri Uri to be created
+   */
+  protected getRestUri(uri: string) {
+    return new RestUri(this.webContext, uri);
   }
 
   /**

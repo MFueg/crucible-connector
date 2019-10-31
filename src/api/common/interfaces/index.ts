@@ -1,5 +1,5 @@
 export * from './indexing';
-export * from './pagedResponse';
+export * from '../../interfaces/pagedResponse';
 export * from './project';
 export * from './repository';
 export * from './reviewerGroup';

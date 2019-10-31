@@ -9,3 +9,4 @@ src
 **/tslint.json
 **/tsconfig.json
 **/.vscodeignore
+**/*.intern.test.ts

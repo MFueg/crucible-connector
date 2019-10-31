@@ -1,20 +1,20 @@
 import 'mocha';
 import * as assert from 'assert';
-import * as mock from 'mockttp';
-import { Connector } from '../connector';
+// import * as mock from 'mockttp';
+// import { Connector } from '../connector';
 
 describe('Hello function', () => {
-  const mockServer = mock.getLocal();
-  const connector = new Connector('https://localhost:443', 'admin', 'admin', false);
+  // const mockServer = mock.getLocal();
+  //const connector = new Connector('https://localhost:443', 'admin', 'admin', false);
 
-  beforeEach(() => mockServer.start());
-  afterEach(() => mockServer.stop());
+  // beforeEach(() => mockServer.start());
+  // afterEach(() => mockServer.stop());
 
   it('should request an existing repository', async () => {
     assert.equal(true, true);
-    connector.crucible.searchReview('Test...', 12).then((r) => {
-      console.log(r.reviewData.map((i) => i.name).join(', '));
-    });
+    // connector.crucible.searchReview('Test...', 12).then((r) => {
+    //   console.log(r.reviewData.map((i) => i.name).join(', '));
+    // });
     /*
     const endpointMock = await mockServer.get("/mocked-endpoint").thenReply(200, "hmm?");
 

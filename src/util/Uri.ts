@@ -21,7 +21,7 @@ export class Uri {
    */
   public constructor(private base: string, ...segments: string[]) {
     for (var i = 0; i < segments.length; i++) {
-      this.segments.push(segments[i]);
+      this.segments.push(segments[i].replace(/^\//, '').replace(/\/$/, ''));
     }
   }
 

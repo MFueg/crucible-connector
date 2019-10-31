@@ -1,5 +1,5 @@
 import { HttpCodes } from 'typed-rest-client/HttpClient';
-import { ParentConnectorReference, RestUri, SubConnector } from '../../util';
+import { ParentConnectorReference, SubConnector } from '../../util';
 import {
   ChangeSet,
   ChangeSetIdS,
@@ -94,7 +94,7 @@ export class SubConnectorFisheye extends SubConnector {
    * Uri for requests to the change set domain
    */
   private get uriChangeSets() {
-    return new RestUri('/rest-service-fe/changeset-v1');
+    return this.getRestUri('/rest-service-fe/changeset-v1');
   }
 
   /**
@@ -135,7 +135,7 @@ export class SubConnectorFisheye extends SubConnector {
    * Uri for requests to the repository domain
    */
   private get uriRepositories() {
-    return new RestUri('/rest-service-fe/repositories-v1');
+    return this.getRestUri('/rest-service-fe/repositories-v1');
   }
 
   /**
@@ -191,7 +191,7 @@ export class SubConnectorFisheye extends SubConnector {
    * Uri for requests to the repository domain
    */
   private get uriRevision() {
-    return new RestUri('/rest-service-fe/revisionData-v1');
+    return this.getRestUri('/rest-service-fe/revisionData-v1');
   }
 
   /**
