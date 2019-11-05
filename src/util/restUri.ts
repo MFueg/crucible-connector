@@ -2,44 +2,69 @@ import { RestClient } from 'typed-rest-client';
 import * as trc from 'typed-rest-client/Interfaces';
 import { HttpCodes, HttpClient } from 'typed-rest-client/HttpClient';
 import * as fs from 'fs';
-import { Error } from '../api/crucible/interfaces';
 
 import tempfile = require('tempfile');
 import { Uri } from './uri';
 
-export interface IRequestOptions extends trc.IRequestOptions { }
+export interface IRequestOptions extends trc.IRequestOptions {}
 
 /**
  * Response class holding the http status code and the result object.
  * The result object can be the requested object or an error.
  *
  * With `get` the result can easily be checked an casted to the expected type.
- * With `getError` the error case can easily be checked.
  */
 export class Response<T> {
-  public constructor(public readonly statusCode: number, public readonly result: T | Error | null) { }
+  private done = false;
 
-  public get<U = T>(code?: HttpCodes): U | undefined {
-    if (!code || code != this.statusCode) {
+  /**
+   * Creates a new Response.
+   *
+   * @param statusCode HTTP status code.
+   * @param result Result value ot type `T`.
+   */
+  public constructor(public readonly statusCode: number, public readonly result: T | null) {}
+
+  /**
+   * Retrieves the result casted into a selectable Type `U` (default: Result type `T` of the Request).
+   *
+   * The conversion can be specified with an optional HTTP code an will only return a value unequal
+   * to `undefined` if the response status code matches.
+   * If no HTTP code is given, the result will always be casted.
+   *
+   * @param code (optional) HTTP status code when the given type `U` is expected.
+   */
+  public getResult<U = T>(code?: HttpCodes): U | undefined {
+    if (code && code != this.statusCode) {
       return undefined;
     }
     if (this.result == null) {
       return undefined;
+    } else {
+      return (this.result as unknown) as U;
     }
-    return (this.result as unknown) as U;
   }
 
-  public getError(fallbackMessage: string = 'Unknown error'): Error {
-    let error: Error = {
-      code: this.statusCode == HttpCodes.NotFound ? 'NotFound' : 'Unknown',
-      message: fallbackMessage
-    };
-    if (this.result != null) {
-      let e: Error | undefined = this.result as Error;
-      return e ? e : error;
-    } else {
-      return error;
+  public resolveIf<U = T>(code: HttpCodes | HttpCodes[], callback: (result: U | undefined) => void) {
+    let codes = Array.isArray(code) ? code : [code];
+    if (!this.done && this.result != null && (codes.length == 0 || codes.includes(this.statusCode))) {
+      callback((this.result as unknown) as U);
+      this.done = true;
     }
+    return this;
+  }
+
+  public rejectIf<U = T>(code: HttpCodes | HttpCodes[], callback: (reason?: any) => void) {
+    let codes = Array.isArray(code) ? code : [code];
+    if (!this.done && (codes.length == 0 || codes.includes(this.statusCode))) {
+      callback((this.result as unknown) as U);
+      this.done = true;
+    }
+    return this;
+  }
+
+  public reject<U = T>(callback: (reason?: any) => void) {
+    callback((this.result as unknown) as U);
   }
 }
 

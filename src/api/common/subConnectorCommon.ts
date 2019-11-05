@@ -80,6 +80,8 @@ export class SubConnectorCommon extends SubConnector {
     super(parentReference);
   }
 
+  private readonly defaultError: Error = { code: 'Unknown', message: 'Unknown error' };
+
   /********************** INDEXING API **********************/
 
   // TODO: This part of the API is not completely documented - must be evaluated
@@ -111,11 +113,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let status = r.get<IndexingStatus>(HttpCodes.OK);
+          let status = r.getResult<IndexingStatus>(HttpCodes.OK);
           if (status) {
             resolve(status);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -164,11 +166,11 @@ export class SubConnectorCommon extends SubConnector {
       this.uriServer
         .get<ServerStatus | Error>('get-server-status', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let status = r.get<ServerStatus>(HttpCodes.OK);
+          let status = r.getResult<ServerStatus>(HttpCodes.OK);
           if (status) {
             resolve(status);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -205,11 +207,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<UserGroup>(201);
+          let result = r.getResult<UserGroup>(201);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -239,11 +241,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<UserGroup>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<UserGroup>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -266,11 +268,11 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment(groupName)
         .get<UserGroup | Error>('get-user-group', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<UserGroup>(HttpCodes.OK);
+          let result = r.getResult<UserGroup>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -300,11 +302,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<UserGroupContent>(HttpCodes.OK);
+          let result = r.getResult<UserGroupContent>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -330,7 +332,7 @@ export class SubConnectorCommon extends SubConnector {
           if (r.statusCode == 204) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -361,11 +363,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<UserName>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -399,7 +401,7 @@ export class SubConnectorCommon extends SubConnector {
           if (r.statusCode == 204 || r.statusCode == 304) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -431,7 +433,7 @@ export class SubConnectorCommon extends SubConnector {
   //         if (r.statusCode == 204 || r.statusCode == 304) {
   //           resolve();
   //         } else {
-  //           reject(r.getError());
+  //           reject(r.getResult<Error>() || this.defaultError);
   //         }
   //       })
   //       .catch((e) => {
@@ -453,11 +455,11 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('users')
         .create<UserGroup | Error>('create-user', user, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<UserData>(201);
+          let result = r.getResult<UserData>(201);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -485,11 +487,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<UserData>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<UserData>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -512,11 +514,11 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment(userName)
         .get<UserData | Error>('get-user-data', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<UserData>(HttpCodes.OK);
+          let result = r.getResult<UserData>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -547,11 +549,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<UserData>(HttpCodes.OK);
+          let result = r.getResult<UserData>(HttpCodes.OK);
           if (result) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -577,7 +579,7 @@ export class SubConnectorCommon extends SubConnector {
           if (r.statusCode == 204) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -611,11 +613,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<UserGroupName>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<UserGroupName>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -645,11 +647,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<Project>(201);
+          let result = r.getResult<Project>(201);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -677,11 +679,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<Project>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<Project>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -704,11 +706,11 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment(projectKey)
         .get<Project | Error>('get-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<Project>(HttpCodes.OK);
+          let result = r.getResult<Project>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -738,11 +740,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<Project>(HttpCodes.OK);
+          let result = r.getResult<Project>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -771,7 +773,7 @@ export class SubConnectorCommon extends SubConnector {
           if (r.statusCode == 204) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -806,7 +808,7 @@ export class SubConnectorCommon extends SubConnector {
           if (r.statusCode == 204) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -840,11 +842,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<UserName>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -879,7 +881,7 @@ export class SubConnectorCommon extends SubConnector {
           if (r.statusCode == 204 || r.statusCode == 304) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -910,7 +912,7 @@ export class SubConnectorCommon extends SubConnector {
   //         if (r.statusCode == 204 || r.statusCode == 304) {
   //           resolve();
   //         } else {
-  //           reject(r.getError());
+  //          reject(r.getResult<Error>() || this.defaultError);
   //         }
   //       })
   //       .catch((e) => {
@@ -944,11 +946,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -983,7 +985,7 @@ export class SubConnectorCommon extends SubConnector {
           if (r.statusCode == 204 || r.statusCode == 304) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1014,7 +1016,7 @@ export class SubConnectorCommon extends SubConnector {
   //         if (r.statusCode == 204 || r.statusCode == 304) {
   //           resolve();
   //         } else {
-  //           reject(r.getError());
+  //         reject(r.getResult<Error>() || this.defaultError);
   //         }
   //       })
   //       .catch((e) => {
@@ -1048,11 +1050,11 @@ export class SubConnectorCommon extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<UserName>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<UserName>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1087,7 +1089,7 @@ export class SubConnectorCommon extends SubConnector {
     if (r.statusCode == 204 || r.statusCode == 304) {
               resolve();
             } else {
-              reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
             }
           })
           .catch((e) => {
@@ -1118,7 +1120,7 @@ export class SubConnectorCommon extends SubConnector {
   //         if (r.statusCode == 204 || r.statusCode == 304) {
   //           resolve();
   //         } else {
-  //           reject(r.getError());
+  //          reject(r.getResult<Error>() || this.defaultError);
   //         }
   //       })
   //       .catch((e) => {
@@ -1152,11 +1154,11 @@ this.host,
 this.cerateQueryOptions()
         )
         .then( (r) => {
-  let result = r.get<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
+  let result = r.getResult<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
   if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
         }
       })
       .catch((e) => {
@@ -1191,7 +1193,7 @@ this.getAuthHandlers(),
   if (r.statusCode == 204 || r.statusCode == 304) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1224,7 +1226,7 @@ this.getAuthHandlers(),
   //         if (r.statusCode == 204 || r.statusCode == 304) {
   //           resolve();
   //         } else {
-  //           reject(r.getError());
+  //          reject(r.getResult<Error>() || this.defaultError);
   //         }
   //       })
   //       .catch((e) => {
@@ -1259,11 +1261,11 @@ this.getAuthHandlers(),
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<RepositoryAny>(201);
+          let result = r.getResult<RepositoryAny>(201);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1291,11 +1293,11 @@ this.getAuthHandlers(),
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PagedResponse<RepositoryAny>>(HttpCodes.OK);
+          let result = r.getResult<PagedResponse<RepositoryAny>>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {

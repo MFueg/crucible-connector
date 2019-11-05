@@ -190,7 +190,7 @@ export interface GetAllowedReviewMembersOptions extends PagedRequestOptions {
  *
  * Crucible API - Documentation
  * https://docs.atlassian.com/fisheye-crucible/latest/wadl/crucible.html
- * 
+ *
  * Supported versions: 5.4.x, 5.7.0
  */
 export class SubConnectorCrucible extends SubConnector {
@@ -201,6 +201,8 @@ export class SubConnectorCrucible extends SubConnector {
   public constructor(parentReference: ParentConnectorReference) {
     super(parentReference);
   }
+
+  private readonly defaultError: Error = { code: 'Unknown', message: 'Unknown error' };
 
   /********************** USER API **********************/
 
@@ -225,11 +227,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ username: usernameFilter })
         .get<User[] | Error>('get-users', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let users = r.get<User[]>(HttpCodes.OK);
+          let users = r.getResult<User[]>(HttpCodes.OK);
           if (users) {
             resolve(users);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -253,11 +255,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(username)
         .get<User>('get-user-committer', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let user = r.get<User>(HttpCodes.OK);
+          let user = r.getResult<User>(HttpCodes.OK);
           if (user) {
             resolve(user);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -279,11 +281,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(username)
         .get<UserProfile>('get-user-profile', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let profile = r.get<UserProfile>(HttpCodes.OK);
+          let profile = r.getResult<UserProfile>(HttpCodes.OK);
           if (profile) {
             resolve(profile);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -315,11 +317,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ term: term, maxReturn: maxReturn })
         .get<Reviews | Error>('search-review', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let reviews = r.get<Reviews>(HttpCodes.OK);
+          let reviews = r.getResult<Reviews>(HttpCodes.OK);
           if (reviews) {
             resolve(reviews);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -342,11 +344,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ jiraKey: jiraKey, maxReturn: maxReturn })
         .get<Reviews | Error>('get-review-for-issue', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let reviews = r.get<Reviews>(HttpCodes.OK);
+          let reviews = r.getResult<Reviews>(HttpCodes.OK);
           if (reviews) {
             resolve(reviews);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -381,11 +383,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ limit: options.limit })
         .get<Repositories | Error>('search-repositories', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<Repositories>(HttpCodes.OK);
+          let result = r.getResult<Repositories>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -413,11 +415,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(path)
         .loadFile<string>('get-file-revision-content', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<string>(HttpCodes.OK);
+          let content = r.getResult<string>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -442,11 +444,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(revision)
         .get<Change>('get-changeset', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Change>(HttpCodes.OK);
+          let content = r.getResult<Change>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -483,11 +485,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ max: options.max })
         .get<Change>('search-changesets', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Change>(HttpCodes.OK);
+          let content = r.getResult<Change>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -519,11 +521,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(path)
         .get<VersionedEntity>('get-versioned-entity', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<VersionedEntity>(HttpCodes.OK);
+          let content = r.getResult<VersionedEntity>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -549,11 +551,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(repository)
         .get<Repository>('get-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Repository>(HttpCodes.OK);
+          let content = r.getResult<Repository>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -578,11 +580,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(path)
         .get<Repository>('browse-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Listing>(HttpCodes.OK);
+          let content = r.getResult<Listing>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -610,11 +612,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(path)
         .get<History>('browse-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<History>(HttpCodes.OK);
+          let content = r.getResult<History>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -647,11 +649,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ state: states.join(',') })
         .get<Reviews>('get-reviews', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Reviews>(HttpCodes.OK);
+          let content = r.getResult<Reviews>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -687,11 +689,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ state: state })
         .create<Review | Error>('create-review', review, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Review>(HttpCodes.OK);
+          let content = r.getResult<Review>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -714,11 +716,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(version)
         .get<ReviewMetrics>('get-review-metrics', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<ReviewMetrics>(HttpCodes.OK);
+          let content = r.getResult<ReviewMetrics>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -745,11 +747,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ render: render })
         .get<Comment | Error>('get-review-comment', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Comment>(HttpCodes.OK);
+          let content = r.getResult<Comment>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -777,7 +779,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -811,7 +813,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -854,11 +856,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<ReviewItem>(HttpCodes.OK);
+          let content = r.getResult<ReviewItem>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -878,11 +880,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('versionInfo')
         .get<VersionInfo>('get-version-info', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<VersionInfo>(HttpCodes.OK);
+          let content = r.getResult<VersionInfo>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -907,11 +909,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ state: states.join(';') }) // TODO: Check
         .get<Reviews>('get-reviews-detailed', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Reviews>(HttpCodes.OK);
+          let content = r.getResult<Reviews>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -938,11 +940,11 @@ export class SubConnectorCrucible extends SubConnector {
       uri
         .get<Reviews>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Reviews>(HttpCodes.OK);
+          let content = r.getResult<Reviews>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -988,8 +990,7 @@ export class SubConnectorCrucible extends SubConnector {
   private searchReviewsInternal(detailed: boolean, options: SearchReviewsOptions): Promise<Reviews> {
     return new Promise((resolve, reject) => {
       let id = detailed ? 'search-reviews-detailed' : 'search-reviews';
-      let uri = this.uriReviews
-        .addSegment('filter');
+      let uri = this.uriReviews.addSegment('filter');
       if (detailed) {
         uri.addSegment('details');
       }
@@ -1008,11 +1009,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ toDate: options.toDate ? options.toDate.getMilliseconds() : undefined })
         .get<Reviews | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Reviews>(HttpCodes.OK);
+          let content = r.getResult<Reviews>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1067,11 +1068,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ render: render })
         .get<Comments | Error>('get-comment-replies', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Comments>(HttpCodes.OK);
+          let content = r.getResult<Comments>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1105,11 +1106,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Comment>(HttpCodes.OK);
+          let content = r.getResult<Comment>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1139,11 +1140,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Review>(HttpCodes.OK);
+          let content = r.getResult<Review>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1175,11 +1176,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Comment>(HttpCodes.OK);
+          let content = r.getResult<Comment>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1211,11 +1212,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Comment>(HttpCodes.OK);
+          let content = r.getResult<Comment>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1258,7 +1259,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1289,7 +1290,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1321,7 +1322,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1355,7 +1356,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1389,11 +1390,11 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            let reviewError = r.get<ReviewError>(HttpCodes.Conflict);
+            let reviewError = r.getResult<ReviewError>(HttpCodes.Conflict);
             if (reviewError) {
               reject(reviewError);
             } else {
-              reject(r.getError());
+              reject(r.getResult<Error>() || this.defaultError);
             }
           }
         })
@@ -1428,11 +1429,11 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            let reviewError = r.get<ReviewError>(HttpCodes.Conflict);
+            let reviewError = r.getResult<ReviewError>(HttpCodes.Conflict);
             if (reviewError) {
               reject(reviewError);
             } else {
-              reject(r.getError());
+              reject(r.getResult<Error>() || this.defaultError);
             }
           }
         })
@@ -1469,15 +1470,15 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<Review>(HttpCodes.OK);
+          let result = r.getResult<Review>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            let reviewError = r.get<ReviewError>(HttpCodes.Conflict);
+            let reviewError = r.getResult<ReviewError>(HttpCodes.Conflict);
             if (reviewError) {
               reject(reviewError);
             } else {
-              reject(r.getError());
+              reject(r.getResult<Error>() || this.defaultError);
             }
           }
         })
@@ -1505,7 +1506,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1537,7 +1538,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1564,11 +1565,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ path: normalize(path).replace(/^\/+/, '') }) // remove leading slash
         .get<Reviews | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<Reviews>(HttpCodes.OK);
+          let result = r.getResult<Reviews>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1623,11 +1624,11 @@ export class SubConnectorCrucible extends SubConnector {
       uri
         .get<Review | Error>(id, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<Review>(HttpCodes.OK);
+          let result = r.getResult<Review>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1664,7 +1665,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1707,11 +1708,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ReviewTransitions>(HttpCodes.OK);
+          let result = r.getResult<ReviewTransitions>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1740,11 +1741,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ReviewTransitions>(HttpCodes.OK);
+          let result = r.getResult<ReviewTransitions>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1774,11 +1775,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<Review>(HttpCodes.OK);
+          let result = r.getResult<Review>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1807,11 +1808,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('patch')
         .create<Review | Error>('add-review-patch', patch, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<Review>(HttpCodes.OK);
+          let result = r.getResult<Review>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1839,11 +1840,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<PatchGroups>(HttpCodes.OK);
+          let result = r.getResult<PatchGroups>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1885,11 +1886,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ReviewItem>(HttpCodes.OK);
+          let result = r.getResult<ReviewItem>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1928,11 +1929,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ReviewItem>(HttpCodes.OK);
+          let result = r.getResult<ReviewItem>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1960,7 +1961,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -1985,11 +1986,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(reviewItemId)
         .del<ReviewItem | Error>('get-review-item', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<ReviewItem>(HttpCodes.OK);
+          let result = r.getResult<ReviewItem>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2014,11 +2015,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ render: render })
         .get<Comments | Error>('get-review-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Comments>(HttpCodes.OK);
+          let content = r.getResult<Comments>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2048,11 +2049,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Comment>(HttpCodes.OK);
+          let content = r.getResult<Comment>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2083,11 +2084,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Comments>(HttpCodes.OK);
+          let content = r.getResult<Comments>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2118,11 +2119,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Comments>(HttpCodes.OK);
+          let content = r.getResult<Comments>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2150,11 +2151,11 @@ export class SubConnectorCrucible extends SubConnector {
         .setParametersFromObject({ render: render })
         .get<Comments | Error>('get-review-item-comments', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let content = r.get<Comments>(HttpCodes.OK);
+          let content = r.getResult<Comments>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2186,11 +2187,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let content = r.get<Comments>(HttpCodes.OK);
+          let content = r.getResult<Comments>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2215,11 +2216,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment(patchId)
         .del<PatchGroups | Error>('delete-review-patch', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<PatchGroups>(HttpCodes.OK);
+          let result = r.getResult<PatchGroups>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2242,11 +2243,11 @@ export class SubConnectorCrucible extends SubConnector {
         .addSegment('reviewers')
         .del<Reviewers | Error>('get-review-reviewers', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<Reviewers>(HttpCodes.OK);
+          let result = r.getResult<Reviewers>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2279,7 +2280,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2308,11 +2309,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<Reviewers>(HttpCodes.OK);
+          let result = r.getResult<Reviewers>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2341,11 +2342,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<Reviewers>(HttpCodes.OK);
+          let result = r.getResult<Reviewers>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2373,7 +2374,7 @@ export class SubConnectorCrucible extends SubConnector {
           if (r.statusCode == HttpCodes.OK) {
             resolve();
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2401,11 +2402,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ReviewItems>(HttpCodes.OK);
+          let result = r.getResult<ReviewItems>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2438,11 +2439,11 @@ export class SubConnectorCrucible extends SubConnector {
       uri
         .create<ReviewItem | Error>(id, reviewItem, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<ReviewItem>(HttpCodes.OK);
+          let result = r.getResult<ReviewItem>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2491,11 +2492,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<Review>(HttpCodes.OK);
+          let result = r.getResult<Review>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2545,11 +2546,11 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ReviewItem>(HttpCodes.OK);
+          let result = r.getResult<ReviewItem>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -2557,8 +2558,6 @@ export class SubConnectorCrucible extends SubConnector {
         });
     });
   }
-
-
 
   /********************** REVIEWER API **********************/
 
@@ -2576,7 +2575,10 @@ export class SubConnectorCrucible extends SubConnector {
    * @param reviewId review id determining allowed reviewers
    * @param options options to search for reviews.
    */
-  public getAllowedParticipantsForReview(reviewId: string, options: GetAllowedReviewParticipantsOptions): Promise<PagedResponse<Participant>> {
+  public getAllowedParticipantsForReview(
+    reviewId: string,
+    options: GetAllowedReviewParticipantsOptions
+  ): Promise<PagedResponse<Participant>> {
     return new Promise((resolve, reject) => {
       this.uriReviewers
         .addSegment(reviewId)
@@ -2588,13 +2590,18 @@ export class SubConnectorCrucible extends SubConnector {
           limit: options.limit,
           start: options.start
         })
-        .get<PagedResponse<Participant>>('get-allowed-review-participants', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<PagedResponse<Participant>>(
+          'get-allowed-review-participants',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
-          let content = r.get<PagedResponse<Participant>>(HttpCodes.OK);
+          let content = r.getResult<PagedResponse<Participant>>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>());
           }
         })
         .catch((e) => {
@@ -2608,9 +2615,9 @@ export class SubConnectorCrucible extends SubConnector {
    *
    * ! Available in crucible version >= 4.7.2
    *
-   * Note that this path doesn't follow the REST standard, like {reviewId}/groups/{groupName}/members, 
-   * because there is a chance to have ambiguous path for different resources. 
-   * For example if the group is 'department/members' and you want to GET this entity, you call 
+   * Note that this path doesn't follow the REST standard, like {reviewId}/groups/{groupName}/members,
+   * because there is a chance to have ambiguous path for different resources.
+   * For example if the group is 'department/members' and you want to GET this entity, you call
    * GET {reviewId}/groups/department/members but this could be treated as GET entity of group 'department/members' or
    * GET members of group 'department'
    *
@@ -2618,20 +2625,31 @@ export class SubConnectorCrucible extends SubConnector {
    * @param groupName review id determining allowed reviewers
    * @param options options to search for members.
    */
-  public getAllowedMembersForReview(reviewId: string, groupName: string, options: GetAllowedReviewMembersOptions): Promise<PagedResponse<ParticipantUser>> {
+  public getAllowedMembersForReview(
+    reviewId: string,
+    groupName: string,
+    options: GetAllowedReviewMembersOptions
+  ): Promise<PagedResponse<ParticipantUser>> {
     return new Promise((resolve, reject) => {
       this.uriReviewers
         .addSegment(reviewId)
         .addSegment('group-members')
         .addSegment(groupName)
         .setParametersFromObject(options)
-        .get<PagedResponse<ParticipantUser>>('get-allowed-review-members', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<PagedResponse<ParticipantUser>>(
+          'get-allowed-review-members',
+          this.host,
+          this.getAuthHandlers(),
+          this.cerateQueryOptions()
+        )
         .then((r) => {
-          let content = r.get<PagedResponse<ParticipantUser>>(HttpCodes.OK);
+          r.resolveIf(HttpCodes.OK, resolve);
+          r.reject(reject);
+          let content = r.getResult<PagedResponse<ParticipantUser>>(HttpCodes.OK);
           if (content) {
             resolve(content);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>());
           }
         })
         .catch((e) => {
@@ -2639,5 +2657,4 @@ export class SubConnectorCrucible extends SubConnector {
         });
     });
   }
-
 }

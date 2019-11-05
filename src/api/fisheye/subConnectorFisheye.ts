@@ -10,6 +10,7 @@ import {
   Repositories,
   Repository
 } from './interfaces';
+import { Error } from '../crucible/interfaces';
 
 /***********************************************************************************************
  *
@@ -88,6 +89,8 @@ export class SubConnectorFisheye extends SubConnector {
     super(parentReference);
   }
 
+  private readonly defaultError: Error = { code: 'Unknown', message: 'Unknown error' };
+
   /********************** Changeset API **********************/
 
   /**
@@ -116,11 +119,11 @@ export class SubConnectorFisheye extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let status = r.get<ChangeSetResponse>(HttpCodes.OK);
+          let status = r.getResult<ChangeSetResponse>(HttpCodes.OK);
           if (status) {
             resolve(status);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -148,11 +151,11 @@ export class SubConnectorFisheye extends SubConnector {
       this.uriRepositories
         .get<Repositories | Error>('get-repositories', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let repositories = r.get<Repositories>(HttpCodes.OK);
+          let repositories = r.getResult<Repositories>(HttpCodes.OK);
           if (repositories) {
             resolve(repositories);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -174,11 +177,11 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment(repositoryKey)
         .get<Repository | Error>('get-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let repository = r.get<Repository>(HttpCodes.OK);
+          let repository = r.getResult<Repository>(HttpCodes.OK);
           if (repository) {
             resolve(repository);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -210,11 +213,11 @@ export class SubConnectorFisheye extends SubConnector {
         .setParametersFromObject({ path: path })
         .get<FileRevisions | Error>('get-file-revisions', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<FileRevisions>(HttpCodes.OK);
+          let result = r.getResult<FileRevisions>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -249,11 +252,11 @@ export class SubConnectorFisheye extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<FileRevisions>(HttpCodes.OK);
+          let result = r.getResult<FileRevisions>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -277,11 +280,11 @@ export class SubConnectorFisheye extends SubConnector {
         .setParametersFromObject({ path: path })
         .get<PathInfos | Error>('get-file-infos', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<PathInfos>(HttpCodes.OK);
+          let result = r.getResult<PathInfos>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -307,11 +310,11 @@ export class SubConnectorFisheye extends SubConnector {
         .setParametersFromObject({ path: path, revision: revisionId })
         .get<FileRevision | Error>('get-file-revision', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
         .then((r) => {
-          let result = r.get<FileRevision>(HttpCodes.OK);
+          let result = r.getResult<FileRevision>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -343,11 +346,11 @@ export class SubConnectorFisheye extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ChangeSetIdS>(HttpCodes.OK);
+          let result = r.getResult<ChangeSetIdS>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {
@@ -376,11 +379,11 @@ export class SubConnectorFisheye extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          let result = r.get<ChangeSet>(HttpCodes.OK);
+          let result = r.getResult<ChangeSet>(HttpCodes.OK);
           if (result) {
             resolve(result);
           } else {
-            reject(r.getError());
+            reject(r.getResult<Error>() || this.defaultError);
           }
         })
         .catch((e) => {

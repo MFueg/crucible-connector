@@ -168,7 +168,7 @@ export class Connector {
           this.cerateQueryOptions('application/x-www-form-urlencoded')
         )
         .then((r) => {
-          let auth = r.get<Authentication>(HttpCodes.OK);
+          let auth = r.getResult<Authentication>(HttpCodes.OK);
           if (auth) {
             this.tokenHandler = new PersonalAccessTokenCredentialHandler(auth.token);
           } else {
