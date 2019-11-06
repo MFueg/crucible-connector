@@ -2643,8 +2643,6 @@ export class SubConnectorCrucible extends SubConnector {
           this.cerateQueryOptions()
         )
         .then((r) => {
-          r.resolveIf(HttpCodes.OK, resolve);
-          r.reject(reject);
           let content = r.getResult<PagedResponse<ParticipantUser>>(HttpCodes.OK);
           if (content) {
             resolve(content);

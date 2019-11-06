@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import tempfile = require('tempfile');
 import { Uri } from './uri';
 
-export interface IRequestOptions extends trc.IRequestOptions {}
+export interface IRequestOptions extends trc.IRequestOptions { }
 
 /**
  * Response class holding the http status code and the result object.
@@ -15,15 +15,13 @@ export interface IRequestOptions extends trc.IRequestOptions {}
  * With `get` the result can easily be checked an casted to the expected type.
  */
 export class Response<T> {
-  private done = false;
-
   /**
    * Creates a new Response.
    *
    * @param statusCode HTTP status code.
    * @param result Result value ot type `T`.
    */
-  public constructor(public readonly statusCode: number, public readonly result: T | null) {}
+  public constructor(public readonly statusCode: number, public readonly result: T | null) { }
 
   /**
    * Retrieves the result casted into a selectable Type `U` (default: Result type `T` of the Request).
@@ -43,28 +41,6 @@ export class Response<T> {
     } else {
       return (this.result as unknown) as U;
     }
-  }
-
-  public resolveIf<U = T>(code: HttpCodes | HttpCodes[], callback: (result: U | undefined) => void) {
-    let codes = Array.isArray(code) ? code : [code];
-    if (!this.done && this.result != null && (codes.length == 0 || codes.includes(this.statusCode))) {
-      callback((this.result as unknown) as U);
-      this.done = true;
-    }
-    return this;
-  }
-
-  public rejectIf<U = T>(code: HttpCodes | HttpCodes[], callback: (reason?: any) => void) {
-    let codes = Array.isArray(code) ? code : [code];
-    if (!this.done && (codes.length == 0 || codes.includes(this.statusCode))) {
-      callback((this.result as unknown) as U);
-      this.done = true;
-    }
-    return this;
-  }
-
-  public reject<U = T>(callback: (reason?: any) => void) {
-    callback((this.result as unknown) as U);
   }
 }
 
