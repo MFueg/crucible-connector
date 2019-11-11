@@ -1,5 +1,5 @@
 import { IRequestHandler } from 'typed-rest-client/Interfaces';
-import { IRequestOptions, RestUri } from './restUri';
+import { IRequestOptions, RestUri } from './RestUri';
 
 export type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
 

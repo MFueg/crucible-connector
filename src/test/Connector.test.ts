@@ -1,7 +1,7 @@
 import 'mocha';
 import * as assert from 'assert';
 // import * as mock from 'mockttp';
-// import { Connector } from '../connector';
+// import { Connector } from '../Connector';
 
 describe('Hello function', () => {
   // const mockServer = mock.getLocal();

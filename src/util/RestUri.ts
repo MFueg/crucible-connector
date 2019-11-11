@@ -4,8 +4,8 @@ import { HttpCodes, HttpClient } from 'typed-rest-client/HttpClient';
 import * as fs from 'fs';
 
 import tempfile = require('tempfile');
-import { Uri } from './uri';
-import { ContentType } from './subConnector';
+import { Uri } from './Uri';
+import { ContentType } from './SubConnector';
 
 export type IRequestOptions = trc.IRequestOptions;
 

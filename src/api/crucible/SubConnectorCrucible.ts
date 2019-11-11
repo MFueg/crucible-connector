@@ -35,7 +35,7 @@ import {
   VersionedEntity
 } from './interfaces';
 import { PagedResponse, PagedRequestOptions } from '../common/interfaces';
-import { Participant, ParticipantUser } from './interfaces/participant';
+import { Participant, ParticipantUser } from './interfaces/Participant';
 
 /***********************************************************************************************
  *

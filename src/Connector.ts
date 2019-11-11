@@ -4,9 +4,9 @@ import { IRequestHandler } from 'typed-rest-client/Interfaces';
 import { Authentication } from './api/interfaces';
 import { Error } from './api/crucible/interfaces';
 import { IRequestOptions, RestUri, ContentType } from './util';
-import { SubConnectorCommon } from './api/common/subConnectorCommon';
-import { SubConnectorFisheye } from './api/fisheye/subConnectorFisheye';
-import { SubConnectorCrucible } from './api/crucible/subConnectorCrucible';
+import { SubConnectorCommon } from './api/common/SubConnectorCommon';
+import { SubConnectorFisheye } from './api/fisheye/SubConnectorFisheye';
+import { SubConnectorCrucible } from './api/crucible/SubConnectorCrucible';
 
 /**
  * Basic credential information about the user trying to access Crucible/Fisheye.
