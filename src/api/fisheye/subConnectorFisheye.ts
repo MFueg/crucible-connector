@@ -113,10 +113,7 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment('listChangesets')
         .setParametersFromObject(options)
         .get<ChangeSetResponse | Error>(
-          'search-repository-change-sets',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'search-repository-change-sets'
         )
         .then((r) => {
           let status = r.getResult<ChangeSetResponse>(HttpCodes.OK);
@@ -149,7 +146,7 @@ export class SubConnectorFisheye extends SubConnector {
   public getRepositories(): Promise<Repositories> {
     return new Promise((resolve, reject) => {
       this.uriRepositories
-        .get<Repositories | Error>('get-repositories', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<Repositories | Error>('get-repositories')
         .then((r) => {
           let repositories = r.getResult<Repositories>(HttpCodes.OK);
           if (repositories) {
@@ -175,7 +172,7 @@ export class SubConnectorFisheye extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriRepositories
         .addSegment(repositoryKey)
-        .get<Repository | Error>('get-repository', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<Repository | Error>('get-repository')
         .then((r) => {
           let repository = r.getResult<Repository>(HttpCodes.OK);
           if (repository) {
@@ -211,7 +208,7 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment('pathHistory')
         .addSegment(repositoryKey)
         .setParametersFromObject({ path: path })
-        .get<FileRevisions | Error>('get-file-revisions', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<FileRevisions | Error>('get-file-revisions')
         .then((r) => {
           let result = r.getResult<FileRevisions>(HttpCodes.OK);
           if (result) {
@@ -246,10 +243,7 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment(repositoryKey)
         .setParametersFromObject({ path: path, revision: revisionId })
         .get<FileRevisions | Error>(
-          'get-file-revision-tags',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-file-revision-tags'
         )
         .then((r) => {
           let result = r.getResult<FileRevisions>(HttpCodes.OK);
@@ -278,7 +272,7 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment('pathList')
         .addSegment(repositoryKey)
         .setParametersFromObject({ path: path })
-        .get<PathInfos | Error>('get-file-infos', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<PathInfos | Error>('get-file-infos')
         .then((r) => {
           let result = r.getResult<PathInfos>(HttpCodes.OK);
           if (result) {
@@ -308,7 +302,7 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment('revisionInfo')
         .addSegment(repositoryKey)
         .setParametersFromObject({ path: path, revision: revisionId })
-        .get<FileRevision | Error>('get-file-revision', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<FileRevision | Error>('get-file-revision')
         .then((r) => {
           let result = r.getResult<FileRevision>(HttpCodes.OK);
           if (result) {
@@ -340,10 +334,7 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment(repositoryKey)
         .setParametersFromObject(options)
         .get<ChangeSetIdS | Error>(
-          'get-repository-change-sets',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-repository-change-sets'
         )
         .then((r) => {
           let result = r.getResult<ChangeSetIdS>(HttpCodes.OK);
@@ -373,10 +364,7 @@ export class SubConnectorFisheye extends SubConnector {
         .addSegment(repositoryKey)
         .addSegment(changeSetId)
         .get<ChangeSet | Error>(
-          'get-repository-change-set',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-repository-change-set'
         )
         .then((r) => {
           let result = r.getResult<ChangeSet>(HttpCodes.OK);

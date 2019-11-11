@@ -23,7 +23,7 @@ export class SubConnector {
   /**
    * Host where crucible/fisheye runs.
    */
-  protected get host() {
+  private get host() {
     return this.parentReference.getHost();
   }
 
@@ -37,16 +37,16 @@ export class SubConnector {
 
   /**
    * Creates a new RestUri with the proper context settings.
-   * @param uri Uri to be created
+   * @param base Base uri to be created
    */
-  protected getRestUri(uri: string) {
-    return new RestUri(this.webContext, uri);
+  protected getRestUri(base: string) {
+    return new RestUri(this.host, this.getAuthHandlers(), this.cerateQueryOptions()).addSegment(this.webContext).addSegment(base);
   }
 
   /**
    * Returns an array of available authentication handlers.
    */
-  protected getAuthHandlers() {
+  private getAuthHandlers() {
     return this.parentReference.getAuthHandlers();
   }
 
@@ -55,7 +55,7 @@ export class SubConnector {
    * @param requestMimeType Mime type for the request's content
    * @param resultMimeType Mime type for the response's content
    */
-  protected cerateQueryOptions(requestMimeType?: ContentType, resultMimeType?: ContentType): IRequestOptions {
+  private cerateQueryOptions(requestMimeType?: ContentType, resultMimeType?: ContentType): IRequestOptions {
     return this.parentReference.cerateQueryOptions(requestMimeType, resultMimeType);
   }
 }

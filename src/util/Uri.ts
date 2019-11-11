@@ -10,8 +10,8 @@ export interface UriParameterObject {
  * Uri class with some utility function to easily create an url with parameters etc.
  */
 export class Uri {
-  private readonly segments = new Array<string>();
-  private readonly args = new Map<string, string[]>();
+  private segments = new Array<string>();
+  private args = new Map<string, string[]>();
 
   /**
    * Creates a new object with a host information `base` and with optional `segments`.
@@ -19,9 +19,9 @@ export class Uri {
    * @param base Host information (e.g. example.com)
    * @param segments first segments of the uri
    */
-  public constructor(private base: string, ...segments: string[]) {
+  public constructor(public readonly base: string, ...segments: string[]) {
     for (var i = 0; i < segments.length; i++) {
-      this.segments.push(segments[i].replace(/^\//, '').replace(/\/$/, ''));
+      this.segments.push(...this.prepareSegment(segments[i]));
     }
   }
 
@@ -82,7 +82,7 @@ export class Uri {
    * @param segment new uri segment to append to the uri
    */
   public addSegment(segment: string) {
-    this.segments.push(segment);
+    this.segments.push(...this.prepareSegment(segment));
     return this;
   }
 
@@ -90,9 +90,9 @@ export class Uri {
    * Converts the uri to a string.
    */
   public toString(): string {
-    let segments = this.segments.map((p) => encodeURI(p));
+    let segments = this.segments.filter((s) => s.length > 0).map((p) => encodeURI(p));
     segments.unshift(this.base);
-    let url = segments.join('/');
+    let url = segments.join("/");
     let urlParams = new Array<string>();
     this.args.forEach((vs, k) => {
       vs.forEach((v) => {
@@ -103,5 +103,14 @@ export class Uri {
       url += '?' + urlParams.join('&');
     }
     return url;
+  }
+
+  /**
+   * Prepares a segment string by splitting on slashes and by uri-encode them
+   * @param segment Segment string to be prepared
+   */
+  private prepareSegment(segment: string) {
+    let segments = segment.includes("/") ? segment.split("/") : [segment];
+    return segments.filter(s => s.length > 0).map(s => encodeURIComponent(s));
   }
 }

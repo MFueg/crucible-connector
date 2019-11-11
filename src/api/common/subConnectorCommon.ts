@@ -107,10 +107,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('status')
         .addSegment(repositoryId)
         .get<IndexingStatus | Error>(
-          'get-repository-indexing-status',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-repository-indexing-status'
         )
         .then((r) => {
           let status = r.getResult<IndexingStatus>(HttpCodes.OK);
@@ -164,7 +161,7 @@ export class SubConnectorCommon extends SubConnector {
   public getServerStatus(): Promise<ServerStatus> {
     return new Promise((resolve, reject) => {
       this.uriServer
-        .get<ServerStatus | Error>('get-server-status', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<ServerStatus | Error>('get-server-status')
         .then((r) => {
           let status = r.getResult<ServerStatus>(HttpCodes.OK);
           if (status) {
@@ -201,10 +198,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('groups')
         .create<UserGroup | Error>(
           'create-user-group',
-          group,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          group
         )
         .then((r) => {
           let result = r.getResult<UserGroup>(201);
@@ -235,10 +229,7 @@ export class SubConnectorCommon extends SubConnector {
         .setParametersFromObject({ prefix: prefix })
         .setParametersFromObject(options)
         .get<PagedResponse<UserGroup> | Error>(
-          'get-paged-user-groups',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-user-groups'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<UserGroup>>(HttpCodes.OK);
@@ -266,7 +257,7 @@ export class SubConnectorCommon extends SubConnector {
       this.uriAdmin
         .addSegment('groups')
         .addSegment(groupName)
-        .get<UserGroup | Error>('get-user-group', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<UserGroup | Error>('get-user-group')
         .then((r) => {
           let result = r.getResult<UserGroup>(HttpCodes.OK);
           if (result) {
@@ -297,9 +288,6 @@ export class SubConnectorCommon extends SubConnector {
         .replace<UserGroupContent | Error>(
           'update-user-group',
           content, // only the admin field allowed
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
         )
         .then((r) => {
           let result = r.getResult<UserGroupContent>(HttpCodes.OK);
@@ -327,7 +315,7 @@ export class SubConnectorCommon extends SubConnector {
       this.uriAdmin
         .addSegment('groups')
         .addSegment(groupName)
-        .del<void | Error>('delete-user-group', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .del<void | Error>('delete-user-group')
         .then((r) => {
           if (r.statusCode == 204) {
             resolve();
@@ -357,10 +345,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('users')
         .setParametersFromObject(options)
         .get<PagedResponse<UserName> | Error>(
-          'get-paged-users-of-user-group',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-users-of-user-group'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<UserName>>(HttpCodes.OK);
@@ -392,10 +377,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment(groupName)
         .replace<void | Error>(
           'add-user-to-user-group',
-          user,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          user
         )
         .then((r) => {
           if (r.statusCode == 204 || r.statusCode == 304) {
@@ -453,7 +435,7 @@ export class SubConnectorCommon extends SubConnector {
     return new Promise((resolve, reject) => {
       this.uriAdmin
         .addSegment('users')
-        .create<UserGroup | Error>('create-user', user, this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .create<UserGroup | Error>('create-user', user)
         .then((r) => {
           let result = r.getResult<UserData>(201);
           if (result) {
@@ -481,10 +463,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('users')
         .setParametersFromObject(options)
         .get<PagedResponse<UserGroup> | Error>(
-          'get-paged-users',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-users'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<UserData>>(HttpCodes.OK);
@@ -512,7 +491,7 @@ export class SubConnectorCommon extends SubConnector {
       this.uriAdmin
         .addSegment('users')
         .addSegment(userName)
-        .get<UserData | Error>('get-user-data', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<UserData | Error>('get-user-data')
         .then((r) => {
           let result = r.getResult<UserData>(HttpCodes.OK);
           if (result) {
@@ -543,10 +522,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment(userName)
         .replace<UserData | Error>(
           'update-user-data',
-          user,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          user
         )
         .then((r) => {
           let result = r.getResult<UserData>(HttpCodes.OK);
@@ -574,7 +550,7 @@ export class SubConnectorCommon extends SubConnector {
       this.uriAdmin
         .addSegment('users')
         .addSegment(userName)
-        .del<void | Error>('delete-user', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .del<void | Error>('delete-user')
         .then((r) => {
           if (r.statusCode == 204) {
             resolve();
@@ -607,10 +583,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('groups')
         .setParametersFromObject(options)
         .get<PagedResponse<UserGroupName> | Error>(
-          'get-paged-users-of-user-group',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-users-of-user-group'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<UserGroupName>>(HttpCodes.OK);
@@ -641,10 +614,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('projects')
         .create<Project | Error>(
           'create-project',
-          project,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          project
         )
         .then((r) => {
           let result = r.getResult<Project>(201);
@@ -673,10 +643,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('projects')
         .setParametersFromObject(options)
         .get<PagedResponse<Project> | Error>(
-          'get-paged-projects',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-projects'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<Project>>(HttpCodes.OK);
@@ -704,7 +671,7 @@ export class SubConnectorCommon extends SubConnector {
       this.uriAdmin
         .addSegment('projects')
         .addSegment(projectKey)
-        .get<Project | Error>('get-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .get<Project | Error>('get-project')
         .then((r) => {
           let result = r.getResult<Project>(HttpCodes.OK);
           if (result) {
@@ -734,10 +701,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment(projectKey)
         .replace<Project | Error>(
           'update-project',
-          project,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          project
         )
         .then((r) => {
           let result = r.getResult<Project>(HttpCodes.OK);
@@ -768,7 +732,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('projects')
         .addSegment(projectKey)
         .setParametersFromObject({ deleteProjectReviews: deleteProjectReviews })
-        .del<void | Error>('delete-project', this.host, this.getAuthHandlers(), this.cerateQueryOptions())
+        .del<void | Error>('delete-project')
         .then((r) => {
           if (r.statusCode == 204) {
             resolve();
@@ -799,10 +763,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment(projectKeyTo)
         .replace<void | Error>(
           'move-project-content',
-          undefined,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          undefined
         )
         .then((r) => {
           if (r.statusCode == 204) {
@@ -836,10 +797,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('default-reviewer-users')
         .setParametersFromObject(options)
         .get<PagedResponse<UserName> | Error>(
-          'get-paged-default-reviewer-users-of-project',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-default-reviewer-users-of-project'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<UserName>>(HttpCodes.OK);
@@ -872,10 +830,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('default-reviewer-users')
         .replace<void | Error>(
           'add-default-reviewer-users-to-project',
-          user,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          user
         )
         .then((r) => {
           if (r.statusCode == 204 || r.statusCode == 304) {
@@ -940,10 +895,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('default-reviewer-groups')
         .setParametersFromObject(options)
         .get<PagedResponse<ReviewerGroup> | Error>(
-          'get-paged-default-reviewer-groups-of-project',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-default-reviewer-groups-of-project'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
@@ -976,10 +928,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('default-reviewer-groups')
         .replace<void | Error>(
           'add-default-reviewer-group-to-project',
-          group,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          group
         )
         .then((r) => {
           if (r.statusCode == 204 || r.statusCode == 304) {
@@ -1044,10 +993,7 @@ export class SubConnectorCommon extends SubConnector {
         .addSegment('allowed-reviewer-users')
         .setParametersFromObject(options)
         .get<PagedResponse<UserName> | Error>(
-          'get-paged-allowed-reviewer-users-of-project',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-allowed-reviewer-users-of-project'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<UserName>>(HttpCodes.OK);
@@ -1080,10 +1026,7 @@ export class SubConnectorCommon extends SubConnector {
           .addSegment('allowed-reviewer-users')
           .replace<void | Error>(
     'add-default-reviewer-group-to-project',
-  user,
-    this.host,
-  this.getAuthHandlers(),
-            this.cerateQueryOptions()
+  user
           )    
           .then((r) => {
     if (r.statusCode == 204 || r.statusCode == 304) {
@@ -1148,10 +1091,7 @@ export class SubConnectorCommon extends SubConnector {
     .addSegment('allowed-reviewer-groups')
         .setParametersFromObject(options)
         .get < PagedResponse<ReviewerGroup> | Error>(
-  'get-paged-allowed-reviewer-groups-of-project',
-this.host,
-  this.getAuthHandlers(),
-this.cerateQueryOptions()
+  'get-paged-allowed-reviewer-groups-of-project'
         )
         .then( (r) => {
   let result = r.getResult<PagedResponse<ReviewerGroup>>(HttpCodes.OK);
@@ -1184,10 +1124,7 @@ this.cerateQueryOptions()
         .addSegment('allowed-reviewer-groups')
         .replace<void | Error>(
   'add-allowed-reviewer-group-to-project',
-group,
-  this.host,
-this.getAuthHandlers(),
-          this.cerateQueryOptions()
+group
         )    
         .then((r) => {
   if (r.statusCode == 204 || r.statusCode == 304) {
@@ -1255,10 +1192,7 @@ this.getAuthHandlers(),
         .addSegment('repositories')
         .create<RepositoryAny | Error>(
           'create-repository',
-          repository,
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          repository
         )
         .then((r) => {
           let result = r.getResult<RepositoryAny>(201);
@@ -1287,10 +1221,7 @@ this.getAuthHandlers(),
         .addSegment('repositories')
         .setParametersFromObject(options)
         .get<PagedResponse<RepositoryAny> | Error>(
-          'get-paged-repositories',
-          this.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions()
+          'get-paged-repositories'
         )
         .then((r) => {
           let result = r.getResult<PagedResponse<RepositoryAny>>(HttpCodes.OK);

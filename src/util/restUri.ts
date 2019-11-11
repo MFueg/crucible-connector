@@ -5,8 +5,9 @@ import * as fs from 'fs';
 
 import tempfile = require('tempfile');
 import { Uri } from './uri';
+import { ContentType } from './subConnector';
 
-export interface IRequestOptions extends trc.IRequestOptions { }
+export type IRequestOptions = trc.IRequestOptions;
 
 /**
  * Response class holding the http status code and the result object.
@@ -51,30 +52,47 @@ export class RestUri extends Uri {
   /**
    * Creates a new object with a host information `base` and with optional `segments`.
    *
-   * @param base Host information (e.g. example.com)
-   * @param segments first segments of the uri
+   * @param host Host information (e.g. example.com)
+   * @param authHandlers List of handlers to authenticate
+   * @param requestOptions Options used for the http request
    */
-  public constructor(base: string, ...segments: string[]) {
-    super(base, ...segments);
+  public constructor(
+    host: string,
+    private readonly authHandlers: trc.IRequestHandler[],
+    private readonly requestOptions: IRequestOptions) {
+    super(host);
+  }
+
+  private get host() {
+    return this.base;
+  }
+
+  /**
+   * Creates a new internal rest client.
+   * @param id Id of the request
+   */
+  private createRestClient(id: string) {
+    return new RestClient(id, this.host, this.authHandlers, this.requestOptions);
+  }
+
+  /**
+   * Creates a new internal http client.
+   * @param id Id of the request
+   */
+  private createHttpClient(id: string) {
+    return new HttpClient(id, this.authHandlers, this.requestOptions);
   }
 
   /**
    * HTTP GET
    *
-   * @param id
-   * @param host
-   * @param authHandlers
-   * @param requestOptions
+   * @param id Id of the request.
    */
   public get<Result>(
-    id: string,
-    host: string,
-    authHandlers: trc.IRequestHandler[],
-    requestOptions: IRequestOptions
+    id: string
   ): Promise<Response<Result>> {
-    let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
-      client
+      this.createRestClient(id)
         .get<Result>(this.toString())
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
@@ -90,20 +108,13 @@ export class RestUri extends Uri {
    *
    * @param id
    * @param content
-   * @param host
-   * @param authHandlers
-   * @param requestOptions
    */
   public create<Result>(
     id: string,
     content: any,
-    host: string,
-    authHandlers: trc.IRequestHandler[],
-    requestOptions: IRequestOptions
   ): Promise<Response<Result>> {
-    let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
-      client
+      this.createRestClient(id)
         .create<Result>(this.toString(), content)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
@@ -119,20 +130,13 @@ export class RestUri extends Uri {
    *
    * @param id
    * @param content
-   * @param host
-   * @param authHandlers
-   * @param requestOptions
    */
   public update<Result>(
     id: string,
     content: any,
-    host: string,
-    authHandlers: trc.IRequestHandler[],
-    requestOptions: IRequestOptions
   ): Promise<Response<Result>> {
-    let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
-      client
+      this.createRestClient(id)
         .update<Result>(this.toString(), content)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
@@ -148,20 +152,13 @@ export class RestUri extends Uri {
    *
    * @param id
    * @param content
-   * @param host
-   * @param authHandlers
-   * @param requestOptions
    */
   public replace<Result>(
     id: string,
     content: any,
-    host: string,
-    authHandlers: trc.IRequestHandler[],
-    requestOptions: IRequestOptions
   ): Promise<Response<Result>> {
-    let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
-      client
+      this.createRestClient(id)
         .update<Result>(this.toString(), content)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
@@ -176,19 +173,12 @@ export class RestUri extends Uri {
    * HTTP DELETE
    *
    * @param id
-   * @param host
-   * @param authHandlers
-   * @param requestOptions
    */
   public del<Result>(
-    id: string,
-    host: string,
-    authHandlers: trc.IRequestHandler[],
-    requestOptions: IRequestOptions
+    id: string
   ): Promise<Response<Result>> {
-    let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
-      client
+      this.createRestClient(id)
         .del<Result>(this.toString())
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
@@ -201,14 +191,10 @@ export class RestUri extends Uri {
 
   public uploadFile<Result>(
     id: string,
-    host: string,
-    stream: NodeJS.ReadableStream,
-    authHandlers: trc.IRequestHandler[],
-    requestOptions: IRequestOptions
+    stream: NodeJS.ReadableStream
   ): Promise<Response<Result>> {
-    let client = new RestClient(id, host, authHandlers, requestOptions);
     return new Promise((resolve, reject) => {
-      client
+      this.createRestClient(id)
         .uploadStream<Result>('verb', this.toString(), stream)
         .then((response) => {
           resolve(new Response(response.statusCode, response.result));
@@ -220,22 +206,50 @@ export class RestUri extends Uri {
   }
 
   public loadFile<Result>(
-    id: string,
-    host: string,
-    authHandlers: trc.IRequestHandler[],
-    requestOptions: IRequestOptions
+    id: string
   ): Promise<Response<Result>> {
     return new Promise<Response<Result>>((resolve, reject) => {
       let tempFilePath = tempfile();
       let file: NodeJS.WritableStream = fs.createWriteStream(tempFilePath);
-      let client = new HttpClient(id, authHandlers, requestOptions);
-      client
-        .get(host + '/' + this.toString())
+      this.createHttpClient(id)
+        .get(this.toString())
         .then((r) => {
           r.message.pipe(file).on('close', () => {
             let body: string = fs.readFileSync(tempFilePath).toString();
             let result: Result = JSON.parse(body);
             resolve(new Response(HttpCodes.OK, result));
+          });
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  }
+
+  /**
+   * HTTP POST
+   *
+   * @param id
+   * @param content
+   */
+  public post<Result>(
+    id: string,
+    content: any,
+    contentType?: ContentType
+  ): Promise<Response<Result>> {
+    return new Promise((resolve, reject) => {
+      let additionalHeaders = contentType ? { "Content-Type": contentType } : undefined;
+      this.createHttpClient(id)
+        .post(this.toString(), content, additionalHeaders)
+        .then((response) => {
+          response.readBody().then((message) => {
+            let statusCode = response.message.statusCode;
+            if (statusCode) {
+              let result = JSON.parse(message);
+              resolve(new Response(statusCode, result));
+            } else {
+              reject();
+            }
           });
         })
         .catch((e) => {

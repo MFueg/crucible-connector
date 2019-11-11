@@ -150,7 +150,7 @@ export class Connector {
    * Uri for requests to the authentication domain
    */
   private get uriAuth() {
-    return new RestUri('/rest-service-fecru/auth');
+    return new RestUri(this.connectionOptions.host, this.getAuthHandlers(), this.cerateQueryOptions()).addSegment('/rest-service-fecru/auth');
   }
 
   /**
@@ -160,12 +160,10 @@ export class Connector {
     if (this.connectionOptions.useAccessToken) {
       this.uriAuth
         .addSegment('login')
-        .create<Authentication | Error>(
+        .post<Authentication | Error>(
           'get-auth-token',
-          `userName=${this.credentials.username}&password=${this.credentials.password}`,
-          this.connectionOptions.host,
-          this.getAuthHandlers(),
-          this.cerateQueryOptions('application/x-www-form-urlencoded')
+          `userName=${encodeURIComponent(this.credentials.username)}&password=${encodeURIComponent(this.credentials.password)}`,
+          "application/x-www-form-urlencoded"
         )
         .then((r) => {
           let auth = r.getResult<Authentication>(HttpCodes.OK);
