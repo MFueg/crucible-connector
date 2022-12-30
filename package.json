@@ -40,7 +40,7 @@
   "devDependencies": {
     "@types/mocha": "^5.2.7",
     "clean-webpack-plugin": "^3.0.0",
-    "mocha": "^6.2.2",
+    "mocha": "^10.2.0",
     "mockttp": "^0.19.0",
     "prettier": "^1.18.2",
     "terser-webpack-plugin": "^2.2.1",
